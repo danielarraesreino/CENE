@@ -39,3 +39,23 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# django
+db.sqlite3
+db.sqlite3-journal
+staticfiles/
+media/
+
+# testing
+/playwright-report/
+/test-results/
