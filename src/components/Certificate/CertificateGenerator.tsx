@@ -127,11 +127,9 @@ const MyDocument = ({ userName, certificateId }: { userName: string, certificate
 import { useMemo, useState, useEffect } from 'react';
 
 export function CertificateGenerator({ userName = "Aluno(a)" }: { userName?: string }) {
-  const [certificateId, setCertificateId] = useState("");
-
-  useEffect(() => {
-    setCertificateId(Math.random().toString(36).substring(2, 11).toUpperCase());
-  }, []);
+  const [certificateId] = useState(() => 
+    typeof window !== 'undefined' ? Math.random().toString(36).substring(2, 11).toUpperCase() : "CERT-PENDING"
+  );
 
   return (
     <div className="flex flex-col items-center gap-4">

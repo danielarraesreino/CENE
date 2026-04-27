@@ -30,12 +30,12 @@ export default defineConfig({
       env: {
         NEXTAUTH_URL: 'http://localhost:3000',
         NEXTAUTH_SECRET: 'rei-bebe-super-secret-key-2026',
-        NEXT_PUBLIC_API_URL: 'http://localhost:8000',
+        NEXT_PUBLIC_API_URL: 'http://127.0.0.1:8000',
       }
     },
     {
       command: 'cd backend && ../venv/bin/python manage.py runserver',
-      url: 'http://localhost:8000/api/',
+      url: 'http://127.0.0.1:8000/api/',
       reuseExistingServer: !process.env.CI,
     }
   ],

@@ -16,7 +16,7 @@ export function Trail4Interactive({ onComplete }: { onComplete: () => void }) {
 
   return (
     <div className="w-full flex flex-col items-center py-10 min-h-[700px]">
-      
+
       {/* Phase Indicator */}
       <div className="flex gap-4 mb-12">
         {[
@@ -24,20 +24,19 @@ export function Trail4Interactive({ onComplete }: { onComplete: () => void }) {
           { id: 'derrota', label: '2. Derrota' },
           { id: 'rendicao', label: '3. Rendição' }
         ].map((p) => (
-          <div 
+          <div
             key={p.id}
-            className={`h-2 w-16 rounded-full transition-all duration-500 ${
-              phase === p.id ? 'bg-brand-cyan shadow-[0_0_10px_rgba(6,182,212,0.5)]' : 
+            className={`h-2 w-16 rounded-full transition-all duration-500 ${phase === p.id ? 'bg-brand-cyan shadow-[0_0_10px_rgba(6,182,212,0.5)]' :
               (phase === 'derrota' && p.id === 'exaustao') || (phase === 'rendicao') ? 'bg-brand-cyan/40' : 'bg-white/10'
-            }`}
+              }`}
           />
         ))}
       </div>
 
       <AnimatePresence mode="wait">
-        
+
         {phase === 'exaustao' && (
-          <motion.div 
+          <motion.div
             key="exaustao"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -52,8 +51,8 @@ export function Trail4Interactive({ onComplete }: { onComplete: () => void }) {
             </div>
 
             <div className="relative w-64 h-64 glass-panel rounded-full flex items-center justify-center mb-12 group">
-              <motion.div 
-                animate={{ 
+              <motion.div
+                animate={{
                   scale: [1, 1.1, 1],
                   opacity: [0.5, 0.8, 0.5]
                 }}
@@ -61,7 +60,7 @@ export function Trail4Interactive({ onComplete }: { onComplete: () => void }) {
                 className="absolute inset-0 bg-red-500/20 rounded-full blur-[40px]"
               />
               <Anchor size={80} className="text-gray-500 animate-pulse" />
-              
+
               {/* Floating Pressure Points */}
               <div className="absolute -top-4 -left-4 p-3 glass-panel rounded-xl text-[10px] font-bold text-red-400 border-red-500/30">QUERER TUDO AGORA</div>
               <div className="absolute top-1/2 -right-10 p-3 glass-panel rounded-xl text-[10px] font-bold text-red-400 border-red-500/30">MEDO DO AMANHÃ</div>
@@ -70,11 +69,11 @@ export function Trail4Interactive({ onComplete }: { onComplete: () => void }) {
 
             <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-3xl mb-10 text-left">
               <p className="text-sm text-gray-300 leading-relaxed italic">
-                &quot;O pânico provocado pela sensação de nó no estômago se torna um medo devastador. Você está paralisado pelo medo de enfrentar o dia seguinte.&quot;
+                "O pânico provocado pela sensação de nó no estômago se torna um medo devastador. Você está paralisado pelo medo de enfrentar o dia seguinte."
               </p>
             </div>
 
-            <button 
+            <button
               onClick={() => setPhase('derrota')}
               className="bg-white/10 hover:bg-white/20 text-white px-10 py-4 rounded-full font-bold transition-all border border-white/10"
             >
@@ -84,7 +83,7 @@ export function Trail4Interactive({ onComplete }: { onComplete: () => void }) {
         )}
 
         {phase === 'derrota' && (
-          <motion.div 
+          <motion.div
             key="ego-wall"
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
@@ -94,13 +93,13 @@ export function Trail4Interactive({ onComplete }: { onComplete: () => void }) {
             <div className="mb-10">
               <h2 className="text-3xl font-heading font-black text-white mb-4 uppercase tracking-tighter">A Muralha do Ego</h2>
               <p className="text-gray-400">
-                O ego imaturo insiste: &quot;Posso fazer sozinho&quot;. Mas do seu jeito nunca funcionou. Golpei a negação para encarar a realidade.
+                O ego imaturo insiste: "Posso fazer sozinho". Mas do seu jeito nunca funcionou. Golpei a negação para encarar a realidade.
               </p>
             </div>
 
             <div className="relative w-80 h-80 flex items-center justify-center mb-12">
               <motion.div
-                animate={{ 
+                animate={{
                   scale: 0.9 + (resistance / 1000),
                   rotate: [0, -1, 1, 0],
                   filter: `brightness(${0.7 + (resistance / 300)})`
@@ -116,7 +115,7 @@ export function Trail4Interactive({ onComplete }: { onComplete: () => void }) {
                 </svg>
 
                 <ShieldAlert size={80} className={`${resistance === 0 ? 'text-red-500 animate-ping' : 'text-gray-400 opacity-50'}`} />
-                
+
                 <div className="mt-6 text-center">
                   <span className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em]">Orgulho do Rei Bebê</span>
                   <div className="w-40 h-1 bg-white/5 rounded-full mt-2 overflow-hidden border border-white/5">
@@ -126,7 +125,7 @@ export function Trail4Interactive({ onComplete }: { onComplete: () => void }) {
               </motion.div>
 
               {resistance > 0 && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                   className="absolute -top-4 -right-4 bg-brand-cyan text-white p-3 rounded-2xl shadow-xl text-xs font-black flex items-center gap-2"
                 >
@@ -138,7 +137,7 @@ export function Trail4Interactive({ onComplete }: { onComplete: () => void }) {
             <AnimatePresence mode="wait">
               {resistance === 0 ? (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center">
-                  <p className="text-green-400 font-bold mb-6">&quot;Do meu jeito não funcionou. Eu admito a derrota.&quot;</p>
+                  <p className="text-green-400 font-bold mb-6">"Do meu jeito não funcionou. Eu admito a derrota."</p>
                   <button onClick={() => setPhase('rendicao')} className="bg-white text-black px-12 py-4 rounded-full font-black text-lg transition-all shadow-[0_0_40px_rgba(255,255,255,0.3)]">
                     Rendição Total
                   </button>
@@ -151,7 +150,7 @@ export function Trail4Interactive({ onComplete }: { onComplete: () => void }) {
         )}
 
         {phase === 'rendicao' && (
-          <motion.div 
+          <motion.div
             key="rendicao"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -160,7 +159,7 @@ export function Trail4Interactive({ onComplete }: { onComplete: () => void }) {
             <div className="text-center mb-10">
               <h2 className="text-3xl font-heading font-black text-white mb-4 uppercase tracking-tighter text-gradient">Nós Somos Capazes</h2>
               <p className="text-gray-400">
-                A forma de escapar da ratoeira é mudar o pensamento: &quot;Eu não sou capaz, NÓS somos capazes&quot;.
+                A forma de escapar da ratoeira é mudar o pensamento: "Eu não sou capaz, NÓS somos capazes".
               </p>
             </div>
 
@@ -185,11 +184,11 @@ export function Trail4Interactive({ onComplete }: { onComplete: () => void }) {
             <div className="bg-white/5 border border-white/10 p-6 rounded-3xl mb-12 flex gap-4 items-center">
               <div className="p-3 bg-brand-cyan/20 rounded-2xl text-brand-cyan"><Info size={24} /></div>
               <p className="text-xs text-gray-400 italic">
-                &quot;Antes de fazer o Primeiro Passo, o Rei Bebê precisa confiar que: Se outros são capazes, eu também sou.&quot;
+                "Antes de fazer o Primeiro Passo, o Rei Bebê precisa confiar que: Se outros são capazes, eu também sou."
               </p>
             </div>
 
-            <button 
+            <button
               onClick={onComplete}
               className="bg-green-500 hover:bg-green-600 text-white px-12 py-4 rounded-full font-black text-xl transition-all shadow-[0_0_40px_rgba(34,197,94,0.4)] flex items-center gap-3"
             >
