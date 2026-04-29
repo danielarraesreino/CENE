@@ -4,11 +4,23 @@ import { CaminhosGame } from '@/components/features/interactive/CaminhosGame/Cam
 import { useProgressStore } from '@/store/useProgressStore';
 import { useRouter } from 'next/navigation';
 
+interface InventoryItem {
+  icon: string;
+  name: string;
+  desc: string;
+}
+
+interface GameStats {
+  resilience: number;
+  social: number;
+  achievements: InventoryItem[];
+}
+
 export default function CaminhosGamePage() {
   const setCaminhosStats = useProgressStore((s) => s.setCaminhosStats);
   const router = useRouter();
 
-  const handleComplete = (stats: any) => {
+  const handleComplete = (stats: GameStats) => {
     setCaminhosStats({
       resilience: stats.resilience,
       social: stats.social,

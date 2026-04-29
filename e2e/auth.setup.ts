@@ -4,12 +4,14 @@ const authFile = 'playwright/.auth/user.json';
 
 setup('authenticate', async ({ page }) => {
   await page.goto('/login');
-  await page.getByPlaceholder('Usuário').fill('testuser');
-  await page.getByPlaceholder('Senha').fill('testpass123');
-  await page.getByRole('button', { name: 'Entrar no Hub' }).click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(1000); // Aguarda hidratação do React
+  await page.getByPlaceholder('Ex: joaosilva').fill('testuser');
+  await page.getByPlaceholder('••••••••').fill('testpass123');
+  await page.getByRole('button', { name: 'Acessar Plataforma' }).click();
 
-  // Wait for redirect to /hub - increasing timeout for CI/dev environments
-  await expect(page).toHaveURL(/.*\/hub/, { timeout: 15000 });
+  // Wait for redirect to /hub or /portal/paciente - increasing timeout for CI/dev environments
+  await expect(page).toHaveURL(/.*\/(hub|portal\/paciente)/, { timeout: 15000 });
   
   await page.context().storageState({ path: authFile });
 });

@@ -21,7 +21,7 @@ test.describe('Fluxo Crítico do Paciente', () => {
 
     // 3. Validar redirecionamento para ferramenta de humor
     await expect(page).toHaveURL(/.*\/portal\/paciente\/clinical\/mood/);
-    await expect(page.getByText(/Check-in de Humor/i)).toBeVisible();
+    await expect(page.getByText(/Diário de Humor/i)).toBeVisible();
   });
 
   test('deve acessar o Hub Clínico e ver ferramentas', async ({ page }) => {

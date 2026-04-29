@@ -47,7 +47,20 @@ INSTALLED_APPS = [
     "checkin",
     "rag",
     "clinical",
+    "bleach",
+    "progress",
+    "instructor",
+    "push",
 ]
+
+# VAPID Keys for Web Push
+VAPID_PUBLIC_KEY = "BJWO2ZUfUH5BASLX8IIpPbKBpQNif2zFBo2dcYXZrI1AJmWkzKK1C6WtLO1ctTw0p8PdorxrXmd4H-VeqJCZaFE"
+VAPID_PRIVATE_KEY = """-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg89yQDe2+/yvtJ1Wp
+ETjX0YTMRQ/Wp9QiEQeFjEjbYaKhRANCAASVjtmVH1B+QQEi1/CCKT2ygaUDYn9s
+xQaNnXGF2ayNQCZlpMyitQulrSztXLU8NKfD3aK8a15neB/lXqiQmWhR
+-----END PRIVATE KEY-----"""
+VAPID_ADMIN_EMAIL = "admin@reibb.dev"
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
@@ -139,6 +152,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = 'lms.User'
 
+AUTHENTICATION_BACKENDS = [
+    'lms.backends.EmailOrUsernameModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
 CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
 
@@ -175,3 +193,59 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
+
+LOGS_DIR = BASE_DIR / "logs"
+LOGS_DIR.mkdir(exist_ok=True)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "json": {
+            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "format": "%(asctime)s %(levelname)s %(name)s %(message)s %(module)s %(funcName)s %(lineno)d %(trace_id)s",
+        },
+        "console": {
+            "format": "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "DEBUG" if os.getenv("DEBUG") == "True" else "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "console",
+        },
+        "json_file": {
+            "level": "INFO",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOGS_DIR / "reibb_api.log",
+            "maxBytes": 10_485_760,  # 10MB
+            "backupCount": 5,
+            "formatter": "json",
+        },
+    },
+    "root": {
+        "handlers": ["console", "json_file"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "reibb.api": {
+            "handlers": ["console", "json_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
+
+# Bleach HTML Sanitization
+BLEACH_ALLOWED_TAGS = [
+    'p', 'br', 'strong', 'em', 'u', 'ul', 'ol', 'li', 
+    'h1', 'h2', 'h3', 'blockquote', 'code', 'pre'
+]
+BLEACH_ALLOWED_ATTRIBUTES = ['href', 'title', 'class']
+BLEACH_ALLOWED_PROTOCOLS = ['http', 'https', 'mailto']

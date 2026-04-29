@@ -1,33 +1,38 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Session } from "next-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { clinicalKeys } from "@/lib/api/keys";
 import { toast } from "sonner";
 import { 
-  ChevronLeft, 
-  BookHeart, 
+  Book, 
   Save, 
-  Lock, 
   History,
-  Sparkles,
-  Search
+  Lock,
+  Calendar,
+  FileEdit,
+  HistoryIcon
 } from "lucide-react";
+import { JournalEntry } from "@/types/clinical";
+
+import { ClinicalLayout } from "@/components/layout/ClinicalLayout";
+import { ClinicalHeader } from "@/components/clinical/ui/ClinicalHeader";
+import { ClinicalCard } from "@/components/clinical/ui/ClinicalCard";
+import { ClinicalButton } from "@/components/clinical/ui/ClinicalButton";
+import { ClinicalList, ClinicalListItem } from "@/components/clinical/ui/ClinicalList";
+import { ClinicalEmptyState } from "@/components/clinical/ui/ClinicalEmptyState";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export default function JournalPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: session } = useSession() as { data: Session | null };
+  const { data: session } = useSession();
   const [content, setContent] = useState("");
-  const [mood, setMood] = useState<number | null>(null);
 
-  const { data: entries, isLoading } = useQuery({
+  const { data: entries, isLoading } = useQuery<JournalEntry[]>({
     queryKey: clinicalKeys.list({ type: 'journal' }),
     queryFn: async () => {
       const res = await fetch(`${API_URL}/api/clinical/journal/`, {
@@ -35,13 +40,20 @@ export default function JournalPage() {
       });
       if (!res.ok) throw new Error("Não foi possível carregar seu diário.");
       const data = await res.json();
-      return Array.isArray(data) ? data : data.results || [];
+      const results = Array.isArray(data) ? data : data.results || [];
+      return results.map((item: Record<string, unknown>) => ({
+        id: String(item.id),
+        content: String(item.content),
+        createdAt: String(item.date || item.created_at),
+        updatedAt: String(item.date || item.created_at),
+        userId: ''
+      }));
     },
     enabled: !!session?.accessToken,
   });
 
   const saveMutation = useMutation({
-    mutationFn: async (newEntry: any) => {
+    mutationFn: async (newEntry: Partial<JournalEntry>) => {
       const res = await fetch(`${API_URL}/api/clinical/journal/`, {
         method: "POST",
         headers: {
@@ -53,24 +65,27 @@ export default function JournalPage() {
       if (!res.ok) throw new Error("Não foi possível salvar sua reflexão.");
       return res.json();
     },
-    onMutate: async (newEntry) => {
+    onMutate: async (newEntry: Partial<JournalEntry>) => {
       await queryClient.cancelQueries({ queryKey: clinicalKeys.list({ type: 'journal' }) });
-      const previousEntries = queryClient.getQueryData(clinicalKeys.list({ type: 'journal' }));
+      const previousEntries = queryClient.getQueryData<JournalEntry[]>(clinicalKeys.list({ type: 'journal' }));
       
-      queryClient.setQueryData(clinicalKeys.list({ type: 'journal' }), (old: any) => {
-        const optimistic = {
-          ...newEntry,
+      queryClient.setQueryData<JournalEntry[]>(clinicalKeys.list({ type: 'journal' }), (old) => {
+        const optimistic: JournalEntry = {
+          content: newEntry.content || "",
           id: `temp-${Date.now()}`,
-          date: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          userId: ''
         };
         return old ? [optimistic, ...old] : [optimistic];
       });
 
       return { previousEntries };
     },
-    onError: (err: any, _, context) => {
-      if (context?.previousEntries) {
-        queryClient.setQueryData(clinicalKeys.list({ type: 'journal' }), context.previousEntries);
+    onError: (err: Error, _, context: unknown) => {
+      const ctx = context as { previousEntries?: JournalEntry[] };
+      if (ctx?.previousEntries) {
+        queryClient.setQueryData(clinicalKeys.list({ type: 'journal' }), ctx.previousEntries);
       }
       console.warn('[REIBB_API_ERROR]', { code: 'JOURNAL_SAVE_FAILED', message: err.message });
       toast.error(err.message);
@@ -78,7 +93,6 @@ export default function JournalPage() {
     onSuccess: () => {
       toast.success("Reflexão salva com sucesso!");
       setContent("");
-      setMood(null);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: clinicalKeys.list({ type: 'journal' }) });
@@ -87,125 +101,89 @@ export default function JournalPage() {
 
   const handleSave = () => {
     if (!content.trim()) return;
-    saveMutation.mutate({
-      content,
-      mood_score: mood,
-      entry_type: "reflection"
-    });
+    saveMutation.mutate({ content });
   };
 
   return (
-    <div className="min-h-screen p-8 md:p-12 max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-12">
-      
-      {/* Coluna de Escrita */}
-      <div className="lg:col-span-2 flex flex-col">
-        <div className="mb-8 flex items-center justify-between">
-          <button
-            onClick={() => router.push("/clinical")}
-            className="text-gray-400 hover:text-white flex items-center gap-2 transition-colors"
-          >
-            <ChevronLeft size={20} />
-            Voltar
-          </button>
-          <div className="flex items-center gap-2 text-pink-400">
-            <Lock size={16} />
-            <span className="font-bold uppercase tracking-widest text-xs">Diário Privado Criptografado</span>
+    <ClinicalLayout containerClassName="max-w-6xl">
+      <ClinicalHeader 
+        title="Reflexão do Dia"
+        subtitle="Como foi seu dia? Reservar um momento para refletir ajuda no seu processo de autoconhecimento."
+        icon={<Book size={20} />}
+        actions={
+          <div className="flex items-center gap-2 text-pink-600 bg-pink-50 px-4 py-2 rounded-full border border-pink-100">
+            <Lock size={14} />
+            <span className="font-bold uppercase tracking-widest text-[10px]">Criptografado</span>
           </div>
+        }
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
+        {/* Coluna de Escrita */}
+        <div className="lg:col-span-2 space-y-6">
+          <ClinicalCard className="bg-white min-h-[500px] flex flex-col">
+            <div className="flex items-center gap-2 mb-6 text-slate-400">
+              <FileEdit size={18} />
+              <span className="text-sm font-bold uppercase tracking-widest">Nova Entrada</span>
+            </div>
+            
+            <textarea
+              className="w-full flex-1 bg-slate-50 border border-slate-200 rounded-[2rem] p-8 text-xl text-slate-800 outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/5 transition-all resize-none placeholder:text-slate-300"
+              placeholder="Comece a escrever seus pensamentos..."
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+            />
+            
+            <div className="mt-8 flex justify-end">
+              <ClinicalButton
+                onClick={handleSave}
+                disabled={!content.trim()}
+                isLoading={saveMutation.isPending}
+                icon={<Save size={20} />}
+                className="w-full md:w-auto px-10"
+              >
+                Salvar no Diário
+              </ClinicalButton>
+            </div>
+          </ClinicalCard>
         </div>
 
-        <header className="mb-8">
-          <h1 className="text-4xl font-black text-white mb-2">Reflexão do Dia</h1>
-          <p className="text-gray-400">Como foi seu dia? Alguma conquista ou desafio?</p>
-        </header>
+        {/* Coluna de Histórico */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-3 px-2 text-slate-900">
+            <HistoryIcon size={24} className="text-emerald-600" />
+            <h2 className="text-xl font-black">Histórico</h2>
+          </div>
 
-        <div className="glass-panel p-1 rounded-3xl border border-white/10 focus-within:border-pink-500/50 transition-all">
-          <textarea
-            className="w-full h-80 bg-transparent p-8 text-white text-lg outline-none resize-none leading-relaxed"
-            placeholder="Comece a escrever..."
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-          />
-          <div className="p-6 bg-white/5 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 rounded-b-3xl">
-            <div className="flex items-center gap-4">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Humor:</span>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((val) => (
-                  <button
-                    key={val}
-                    onClick={() => setMood(val)}
-                    className={`w-8 h-8 rounded-full border transition-all flex items-center justify-center text-sm font-bold ${
-                      mood === val ? "bg-pink-500 border-pink-400 text-white" : "border-white/10 text-gray-500 hover:border-pink-500/50"
-                    }`}
-                  >
-                    {val}
-                  </button>
+          <div className="max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+            {isLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-32 bg-slate-100 animate-pulse rounded-3xl" />
                 ))}
               </div>
-            </div>
-            <button
-              onClick={handleSave}
-              disabled={saveMutation.isPending || !content.trim()}
-              className="w-full md:w-auto bg-pink-500 hover:bg-pink-600 disabled:opacity-50 text-white px-10 py-4 rounded-2xl font-bold shadow-[0_0_20px_rgba(236,72,153,0.3)] flex items-center justify-center gap-2 transition-all"
-            >
-              {saveMutation.isPending ? "Salvando..." : "Salvar Reflexão"}
-              <Save size={20} />
-            </button>
+            ) : entries && entries.length > 0 ? (
+              <ClinicalList>
+                {entries.map((entry) => (
+                  <ClinicalListItem
+                    key={entry.id}
+                    title="Entrada Diária"
+                    subtitle={new Date(entry.createdAt).toLocaleDateString()}
+                    description={entry.content}
+                    icon={<Calendar size={16} />}
+                  />
+                ))}
+              </ClinicalList>
+            ) : (
+              <ClinicalEmptyState 
+                title="Nada ainda"
+                description="Suas reflexões anteriores aparecerão aqui quando você começar a escrever."
+                icon={<History size={48} />}
+              />
+            )}
           </div>
         </div>
       </div>
-
-      {/* Coluna de Histórico */}
-      <div className="flex flex-col">
-        <div className="mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-gray-400">
-            <History size={18} />
-            <span className="font-bold uppercase tracking-widest text-xs">Entradas Recentes</span>
-          </div>
-          <button className="text-gray-600 hover:text-white transition-colors">
-            <Search size={18} />
-          </button>
-        </div>
-
-        <div className="space-y-4 overflow-y-auto max-h-[70vh] pr-2 custom-scrollbar">
-          {isLoading ? (
-            <div className="text-center py-12 text-gray-600">Carregando...</div>
-          ) : entries?.map((entry: any) => (
-            <motion.div 
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              key={entry.id} 
-              className="glass-panel p-5 rounded-2xl border border-white/5 hover:border-white/10 transition-all cursor-pointer group"
-            >
-              <div className="flex justify-between items-start mb-3">
-                <span className="text-[10px] font-black uppercase tracking-widest text-pink-400">
-                  {new Date(entry.date).toLocaleDateString()}
-                </span>
-                {entry.mood_score && (
-                  <span className="text-[10px] bg-white/5 px-2 py-1 rounded-md text-gray-500 font-bold">
-                    Humor: {entry.mood_score}/5
-                  </span>
-                )}
-              </div>
-              <p className="text-gray-400 text-sm line-clamp-3 leading-relaxed group-hover:text-gray-300">
-                {entry.content}
-              </p>
-            </motion.div>
-          ))}
-          {(!entries || entries.length === 0) && !isLoading && (
-            <div className="text-center py-20 border-2 border-dashed border-white/5 rounded-3xl">
-              <BookHeart size={40} className="mx-auto text-gray-700 mb-4 opacity-20" />
-              <p className="text-gray-600 text-sm italic">Seu diário ainda está vazio.</p>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-8 p-6 rounded-2xl bg-pink-500/5 border border-pink-500/10 flex items-start gap-3">
-          <Sparkles size={20} className="text-pink-400 shrink-0" />
-          <p className="text-[10px] text-pink-400/60 leading-relaxed italic">
-            "Escrever é a geometria da alma." — Use este espaço para esvaziar a mente e celebrar pequenas vitórias.
-          </p>
-        </div>
-      </div>
-    </div>
+    </ClinicalLayout>
   );
 }

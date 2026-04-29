@@ -48,6 +48,33 @@ export const FEATURE_FLAGS: Record<string, FeatureFlagConfig> = {
     rolloutPercentage: 5,
     description: 'Filtra mutações em IndexedDB quando offline. Sync automático ao reconectar.',
   },
+  
+  // Etapa 3: EAD / LMS
+  LMS_EAD_ACCESS: {
+    enabled: true,
+    strategy: 'fixed',
+    description: 'Acesso ao EAD e cursos publicados.'
+  },
+  
+  PWA_INSTALL_PROMPT: {
+    enabled: true,
+    strategy: 'percentage',
+    rolloutPercentage: 20, // Rollout gradual: 20% dos usuários
+    description: 'Exibe banner de instalação do PWA para usuários mobile.',
+  },
+
+  COURSE_PREREQUISITES_ENABLED: {
+    enabled: true,
+    strategy: 'percentage',
+    rolloutPercentage: 10, // Início controlado
+    description: 'Ativa sistema de bloqueio de aulas por pré-requisito.',
+  },
+
+  INSTRUCTOR_ANALYTICS: {
+    enabled: true,
+    strategy: 'fixed',
+    description: 'Habilita dashboard de analytics para instrutores.',
+  },
 };
 
 // 🔐 Hash determinístico para rollout por porcentagem

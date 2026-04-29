@@ -160,12 +160,12 @@ export default function Home() {
       </section>
 
       {/* DIFERENCIAIS DA PLATAFORMA */}
-      <section className="py-20 bg-emerald-900 text-white">
+      <section className="py-20 bg-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Por que escolher o EAD do CENE?</h2>
-              <p className="text-white text-lg mb-8 leading-relaxed">
+              <p className="text-slate-200 text-lg mb-8 leading-relaxed">
                 Desde 2018, já realizamos mais de 15 eventos presenciais de grande porte. Agora, levamos toda essa expertise para o ambiente digital, permitindo que você estude no seu ritmo.
               </p>
               <ul className="space-y-4">
@@ -175,7 +175,7 @@ export default function Home() {
                   "Certificados válidos em todo o território nacional",
                   "Acesso a materiais complementares e comunidade de alunos"
                 ].map((item, idx) => (
-                  <li key={idx} className="flex items-center gap-3 text-emerald-50">
+                  <li key={idx} className="flex items-center gap-3 text-white">
                     <CheckCircle2 className="text-emerald-400 flex-shrink-0" size={24} />
                     <span>{item}</span>
                   </li>
@@ -183,23 +183,24 @@ export default function Home() {
               </ul>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-emerald-800/50 p-6 rounded-2xl text-center border border-emerald-700">
+              <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl text-center border border-white/20">
                 <MonitorPlay className="w-10 h-10 mx-auto text-emerald-400 mb-4" />
                 <h4 className="text-3xl font-bold text-white mb-1">100%</h4>
-                <p className="text-emerald-100 text-sm">Online e Flexível</p>
+                <p className="text-slate-300 text-sm font-medium">Online e Flexível</p>
               </div>
-              <div className="bg-emerald-800/50 p-6 rounded-2xl text-center border border-emerald-700">
+              <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl text-center border border-white/20">
                 <Users className="w-10 h-10 mx-auto text-emerald-400 mb-4" />
                 <h4 className="text-3xl font-bold text-white mb-1">+15</h4>
-                <p className="text-emerald-100 text-sm">Grandes Eventos Realizados</p>
+                <p className="text-slate-300 text-sm font-medium">Grandes Eventos Realizados</p>
               </div>
-              <div className="bg-emerald-800/50 p-6 rounded-2xl text-center border border-emerald-700 col-span-2">
-                 <p className="text-white italic mb-4 font-medium">"Profissionais renomadas, experientes e de universidades de primeira linha reuniram-se para formar nosso corpo docente."</p>
+              <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl text-center border border-white/20 col-span-2">
+                 <p className="text-slate-200 italic mb-2 font-medium leading-relaxed">"Profissionais renomadas, experientes e de universidades de primeira linha reuniram-se para formar nosso corpo docente."</p>
               </div>
             </div>
           </div>
         </div>
       </section>
+
 
       {/* DIRETORIA / QUEM SOMOS */}
       <section id="sobre" className="py-24 bg-white">

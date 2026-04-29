@@ -1,20 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { clinicalKeys } from "@/lib/api/keys";
 import { toast } from "sonner";
 import { 
-  ChevronLeft, 
   Calendar, 
   CheckCircle, 
-  XCircle,
   Save,
-  Plus
+  Plus,
+  Zap,
+  History,
+  X
 } from "lucide-react";
+import { Trigger } from "@/types/clinical";
+
+import { ClinicalLayout } from "@/components/layout/ClinicalLayout";
+import { ClinicalHeader } from "@/components/clinical/ui/ClinicalHeader";
+import { ClinicalCard } from "@/components/clinical/ui/ClinicalCard";
+import { ClinicalButton } from "@/components/clinical/ui/ClinicalButton";
+import { ClinicalList, ClinicalListItem } from "@/components/clinical/ui/ClinicalList";
+import { ClinicalEmptyState } from "@/components/clinical/ui/ClinicalEmptyState";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -32,8 +41,7 @@ export default function TriggersPage() {
     notas: "",
   });
 
-  // 1. Fetching
-  const { data: logs, isLoading } = useQuery({
+  const { data: logs, isLoading } = useQuery<Trigger[]>({
     queryKey: clinicalKeys.list({ type: 'triggers' }),
     queryFn: async () => {
       const res = await fetch(`${API_URL}/api/clinical/triggers/`, {
@@ -41,12 +49,20 @@ export default function TriggersPage() {
       });
       if (!res.ok) throw new Error("Falha ao carregar registros de gatilhos.");
       const data = await res.json();
-      return Array.isArray(data) ? data : data.results || [];
+      const results = Array.isArray(data) ? data : data.results || [];
+      return results.map((item: any) => ({
+        id: String(item.id),
+        description: item.gatilho,
+        intensity: item.intensidade_impulso,
+        strategy: item.tecnica_utilizada,
+        createdAt: item.timestamp,
+        userId: '',
+        updatedAt: item.timestamp
+      }));
     },
     enabled: !!session?.accessToken,
   });
 
-  // 2. Mutação
   const triggerMutation = useMutation({
     mutationFn: async (payload: typeof newTrigger) => {
       const res = await fetch(`${API_URL}/api/clinical/triggers/`, {
@@ -62,20 +78,24 @@ export default function TriggersPage() {
     },
     onMutate: async (newData) => {
       await queryClient.cancelQueries({ queryKey: clinicalKeys.list({ type: 'triggers' }) });
-      const previousLogs = queryClient.getQueryData(clinicalKeys.list({ type: 'triggers' }));
+      const previousLogs = queryClient.getQueryData<Trigger[]>(clinicalKeys.list({ type: 'triggers' }));
       
-      queryClient.setQueryData(clinicalKeys.list({ type: 'triggers' }), (old: any) => {
-        const optimistic = {
-          ...newData,
+      queryClient.setQueryData<Trigger[]>(clinicalKeys.list({ type: 'triggers' }), (old) => {
+        const optimistic: Trigger = {
           id: `temp-${Date.now()}`,
-          timestamp: new Date().toISOString(),
+          description: newData.gatilho,
+          intensity: newData.intensidade_impulso,
+          strategy: newData.tecnica_utilizada,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          userId: ''
         };
         return old ? [optimistic, ...old] : [optimistic];
       });
 
       return { previousLogs };
     },
-    onError: (err: any, _, context) => {
+    onError: (err: Error, _, context) => {
       if (context?.previousLogs) {
         queryClient.setQueryData(clinicalKeys.list({ type: 'triggers' }), context.previousLogs);
       }
@@ -101,123 +121,163 @@ export default function TriggersPage() {
   };
 
   return (
-    <div className="min-h-screen p-8 md:p-12 max-w-4xl mx-auto w-full flex flex-col">
-      {/* Header */}
-      <div className="mb-12 flex items-center justify-between">
-        <button
-          onClick={() => router.push("/clinical")}
-          className="text-gray-400 hover:text-white flex items-center gap-2 transition-colors"
-        >
-          <ChevronLeft size={20} />
-          Voltar
-        </button>
-        <div className="flex items-center gap-2 text-green-400">
-          <Calendar size={20} />
-          <span className="font-bold uppercase tracking-widest text-xs">Diário de Gatilhos</span>
-        </div>
-      </div>
+    <ClinicalLayout containerClassName="max-w-6xl">
+      <ClinicalHeader 
+        title="Monitoramento de Impulsos"
+        subtitle="Registre situações de risco e como você as superou para fortalecer sua resiliência."
+        icon={<Zap size={20} />}
+        actions={
+          <ClinicalButton 
+            onClick={() => setShowAdd(true)}
+            disabled={showAdd}
+            icon={<Plus size={20} />}
+            className="px-6 py-3"
+          >
+            Registrar Impulso
+          </ClinicalButton>
+        }
+      />
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
-        <div>
-          <h1 className="text-4xl font-black text-white mb-2">Monitoramento de Impulsos</h1>
-          <p className="text-gray-400">Registre situações de risco e como você as superou.</p>
-        </div>
-        <button 
-          onClick={() => setShowAdd(true)}
-          disabled={showAdd}
-          className="bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white px-6 py-3 rounded-full font-bold flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(34,197,94,0.3)]"
-        >
-          <Plus size={20} /> Registrar Impulso
-        </button>
-      </div>
-
-      {/* Form de Adição */}
-      {showAdd && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-panel p-8 rounded-3xl border border-green-500/20 bg-green-500/5 mb-12"
-        >
-          <h2 className="text-xl font-bold text-white mb-6">O que aconteceu?</h2>
-          <div className="space-y-6">
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">O Gatilho (O que causou o desejo?)</label>
-              <input 
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-green-500 transition-all"
-                placeholder="Ex: Vi uma cena de uso num filme..."
-                value={newTrigger.gatilho}
-                onChange={(e) => setNewTrigger({...newTrigger, gatilho: e.target.value})}
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Intensidade do Impulso (0-10)</label>
-                <input 
-                  type="range" min="0" max="10" 
-                  className="w-full accent-green-500 cursor-pointer"
-                  value={newTrigger.intensidade_impulso}
-                  onChange={(e) => setNewTrigger({...newTrigger, intensidade_impulso: parseInt(e.target.value)})}
-                />
-                <div className="flex justify-between text-[10px] text-gray-500 mt-1 font-bold">
-                  <span>LEVE</span>
-                  <span className="text-green-400">{newTrigger.intensidade_impulso}</span>
-                  <span>EXTREMA</span>
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Técnica de Enfrentamento</label>
-                <select 
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-green-500 transition-all"
-                  value={newTrigger.tecnica_utilizada}
-                  onChange={(e) => setNewTrigger({...newTrigger, tecnica_utilizada: e.target.value})}
-                >
-                  <option value="Respiração Profunda" className="bg-slate-900">Respiração Profunda</option>
-                  <option value="Adiar 15 minutos" className="bg-slate-900">Adiar 15 minutos</option>
-                  <option value="Ligar para Apoio" className="bg-slate-900">Ligar para Apoio</option>
-                  <option value="Mudar de Ambiente" className="bg-slate-900">Mudar de Ambiente</option>
-                  <option value="Exercício Físico" className="bg-slate-900">Exercício Físico</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <button 
-                onClick={handleAdd} 
-                disabled={triggerMutation.isPending}
-                className="bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-bold px-8 py-3 rounded-xl flex items-center gap-2 transition-all shadow-lg active:scale-95"
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
+        {/* Form de Adição ou Lista Principal */}
+        <div className="lg:col-span-2 space-y-6">
+          <AnimatePresence mode="wait">
+            {showAdd ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                key="add-form"
               >
-                {triggerMutation.isPending ? "Salvando..." : "Salvar Registro"} 
-                <Save size={18} />
-              </button>
-              <button onClick={() => setShowAdd(false)} className="text-gray-500 hover:text-white font-bold px-8 py-3 transition-colors">Cancelar</button>
-            </div>
-          </div>
-        </motion.div>
-      )}
+                <ClinicalCard className="bg-white border-emerald-200">
+                  <div className="flex items-center justify-between mb-8">
+                    <h2 className="text-xl font-black text-slate-900 uppercase tracking-widest">O que aconteceu?</h2>
+                    <button onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-red-500">
+                      <X size={24} />
+                    </button>
+                  </div>
 
-      {/* Histórico */}
-      <div className="space-y-4">
-        {isLoading ? (
-          <div className="text-center py-20 text-gray-600">Carregando histórico...</div>
-        ) : logs?.map((log: any) => (
-          <div key={log.id} className="glass-panel p-6 rounded-3xl border border-white/10 flex items-center gap-6 hover:border-white/20 transition-all">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${log.sucesso ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"}`}>
-              {log.sucesso ? <CheckCircle size={24} /> : <XCircle size={24} />}
+                  <div className="space-y-8">
+                    <div>
+                      <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-3 ml-1">
+                        O Gatilho (O que causou o desejo?)
+                      </label>
+                      <input 
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-slate-800 outline-none focus:border-emerald-500 transition-all"
+                        placeholder="Ex: Vi uma cena de uso num filme..."
+                        value={newTrigger.gatilho}
+                        onChange={(e) => setNewTrigger({...newTrigger, gatilho: e.target.value})}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div>
+                        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-3 ml-1">
+                          Intensidade (0-10)
+                        </label>
+                        <input 
+                          type="range" min="0" max="10" 
+                          className="w-full accent-emerald-600 h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer"
+                          value={newTrigger.intensidade_impulso}
+                          onChange={(e) => setNewTrigger({...newTrigger, intensidade_impulso: parseInt(e.target.value)})}
+                        />
+                        <div className="flex justify-between text-[10px] text-slate-400 mt-2 font-black">
+                          <span>LEVE</span>
+                          <span className="text-emerald-600 text-sm">{newTrigger.intensidade_impulso}</span>
+                          <span>EXTREMA</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-3 ml-1">
+                          Técnica de Enfrentamento
+                        </label>
+                        <select 
+                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-slate-800 outline-none focus:border-emerald-500 transition-all appearance-none cursor-pointer"
+                          value={newTrigger.tecnica_utilizada}
+                          onChange={(e) => setNewTrigger({...newTrigger, tecnica_utilizada: e.target.value})}
+                        >
+                          <option value="Respiração Profunda">Respiração Profunda</option>
+                          <option value="Adiar 15 minutos">Adiar 15 minutos</option>
+                          <option value="Ligar para Apoio">Ligar para Apoio</option>
+                          <option value="Mudar de Ambiente">Mudar de Ambiente</option>
+                          <option value="Exercício Físico">Exercício Físico</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-4 pt-4">
+                      <ClinicalButton 
+                        variant="ghost"
+                        onClick={() => setShowAdd(false)}
+                      >
+                        Cancelar
+                      </ClinicalButton>
+                      <ClinicalButton 
+                        onClick={handleAdd} 
+                        isLoading={triggerMutation.isPending}
+                        icon={<Save size={20} />}
+                        className="px-10"
+                      >
+                        Salvar Registro
+                      </ClinicalButton>
+                    </div>
+                  </div>
+                </ClinicalCard>
+              </motion.div>
+            ) : (
+              <div className="space-y-4">
+                {isLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="h-24 bg-slate-100 animate-pulse rounded-3xl" />
+                    ))}
+                  </div>
+                ) : logs && logs.length > 0 ? (
+                  <ClinicalList>
+                    {logs.map((log) => (
+                      <ClinicalListItem
+                        key={log.id}
+                        title={log.description}
+                        subtitle={new Date(log.createdAt).toLocaleDateString()}
+                        description={`${log.strategy} • Intensidade: ${log.intensity}/10`}
+                        icon={<CheckCircle size={20} className="text-emerald-600" />}
+                      />
+                    ))}
+                  </ClinicalList>
+                ) : (
+                  <ClinicalEmptyState 
+                    title="Nenhum impulso registrado"
+                    description="Registrar seus gatilhos ajuda você a se preparar melhor para o futuro. Comece quando se sentir pronto."
+                    icon={<History size={48} />}
+                    action={
+                      <ClinicalButton onClick={() => setShowAdd(true)} variant="outline">
+                        Registrar Primeiro Impulso
+                      </ClinicalButton>
+                    }
+                  />
+                )}
+              </div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Sidebar Informativa */}
+        <div className="space-y-6">
+          <ClinicalCard variant="glass" className="p-8">
+            <h3 className="text-lg font-black text-slate-900 mb-4 uppercase tracking-widest">Resumo Semanal</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-white">
+                <span className="text-sm text-slate-500 font-medium">Total de Impulsos</span>
+                <span className="text-xl font-black text-emerald-600">{logs?.length || 0}</span>
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed italic">
+                "O autoconhecimento é a ferramenta mais poderosa contra a recaída."
+              </p>
             </div>
-            <div className="flex-1">
-              <h3 className="text-white font-bold">{log.gatilho}</h3>
-              <p className="text-gray-500 text-sm font-medium">{log.tecnica_utilizada} · Intensidade: {log.intensidade_impulso}/10</p>
-            </div>
-            <div className="text-right hidden sm:block">
-              <span className="text-[10px] text-gray-600 font-black uppercase tracking-widest">
-                {new Date(log.timestamp).toLocaleDateString()}
-              </span>
-            </div>
-          </div>
-        ))}
-        {(!logs || logs.length === 0) && !isLoading && (
-          <div className="text-center py-20 text-gray-600 italic border-2 border-dashed border-white/5 rounded-3xl">Nenhum registro de gatilho ainda. Continue firme!</div>
-        )}
+          </ClinicalCard>
+        </div>
       </div>
-    </div>
+    </ClinicalLayout>
   );
 }

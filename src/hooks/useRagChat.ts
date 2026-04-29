@@ -5,23 +5,9 @@ import { useRagStore } from "@/store/useRagStore";
 import { useErrorStore } from "@/store/useErrorStore";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ApiError } from "@/lib/api/ApiError";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
-class ApiError extends Error {
-  constructor(
-    public code: string, 
-    public userMessage: string, 
-    public status: number, 
-    public isRetryable: boolean = false,
-    public details: any = null
-  ) {
-    super(userMessage);
-  }
-  toJSON() {
-    return { code: this.code, message: this.userMessage, status: this.status, details: this.details, retryable: this.isRetryable };
-  }
-}
 
 /**
  * useRagChat — adaptado do ClinicoCopilot.tsx (matheusweb).
@@ -38,18 +24,39 @@ export function useRagChat() {
   const chatMutation = useMutation({
     mutationFn: async (text: string) => {
       addMessage({ role: "user", content: text });
-      
-      const res = await fetch(`${API_URL}/api/rag/chat/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}),
-        },
-        body: JSON.stringify({
-          messages: useRagStore.getState().messages,
-          message: text,
-        }),
-      });
+
+      // AbortController com timeout de 15s para evitar bloqueio indefinido
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15_000);
+
+      let res: Response;
+      try {
+        res = await fetch(`${API_URL}/api/rag/chat/`, {
+          method: "POST",
+          signal: controller.signal,
+          headers: {
+            "Content-Type": "application/json",
+            ...(session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}),
+          },
+          body: JSON.stringify({
+            messages: useRagStore.getState().messages,
+            message: text,
+          }),
+        });
+      } catch (fetchErr: unknown) {
+        const isAbort =
+          fetchErr instanceof Error && fetchErr.name === "AbortError";
+        throw new ApiError(
+          isAbort ? "TIMEOUT_ERROR" : "NETWORK_ERROR",
+          isAbort
+            ? "O assistente demorou muito para responder. Tente novamente."
+            : "Conexão instável. Verifique sua rede.",
+          0,
+          true
+        );
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {

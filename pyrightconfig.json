@@ -5,17 +5,21 @@
   "exclude": [
     "**/node_modules",
     "**/__pycache__",
-    "venv"
+    "venv",
+    "src"
   ],
   "executionEnvironments": [
     {
-      "root": "backend",
-      "extraPaths": [
-        "."
-      ]
+      "root": "backend"
     }
   ],
+  "venvPath": ".",
+  "venv": "venv",
   "extraPaths": [
-    "backend"
-  ]
+    "backend",
+    "backend/backend"
+  ],
+  "typeCheckingMode": "basic",
+  "reportMissingImports": true,
+  "reportMissingModuleSource": false
 }

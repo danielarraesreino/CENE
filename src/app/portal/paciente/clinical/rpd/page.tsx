@@ -7,7 +7,13 @@ import { useSession } from "next-auth/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { clinicalKeys } from "@/lib/api/keys";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Save, Brain, AlertCircle } from "lucide-react";
+import { ChevronRight, Save, Brain, AlertCircle, ArrowLeft } from "lucide-react";
+
+import { ClinicalLayout } from "@/components/layout/ClinicalLayout";
+import { ClinicalHeader } from "@/components/clinical/ui/ClinicalHeader";
+import { ClinicalCard } from "@/components/clinical/ui/ClinicalCard";
+import { ClinicalButton } from "@/components/clinical/ui/ClinicalButton";
+import { ClinicalProgressBar } from "@/components/clinical/ui/ClinicalProgressBar";
 
 const steps = [
   {
@@ -52,7 +58,7 @@ export default function RPDPage() {
   const [formData, setFormData] = useState<Record<string, string>>({});
 
   const rpdMutation = useMutation({
-    mutationFn: async (payload: any) => {
+    mutationFn: async (payload: unknown) => {
       const res = await fetch(`${API_URL}/api/clinical/rpd/`, {
         method: "POST",
         headers: {
@@ -68,9 +74,9 @@ export default function RPDPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: clinicalKeys.list({ type: 'rpd' }) });
       toast.success("Registro RPD finalizado com sucesso!");
-      router.push("/clinical");
+      router.push("/portal/paciente/clinical");
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       console.warn('[REIBB_API_ERROR]', { code: 'RPD_SAVE_FAILED', message: err.message });
       toast.error(err.message || "Erro ao salvar RPD.");
     }
@@ -86,7 +92,7 @@ export default function RPDPage() {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     } else {
-      router.push("/clinical");
+      router.push("/portal/paciente/clinical");
     }
   };
 
@@ -106,85 +112,86 @@ export default function RPDPage() {
   const step = steps[currentStep];
 
   return (
-    <div className="min-h-screen p-8 md:p-12 max-w-4xl mx-auto w-full flex flex-col">
-      {/* Progresso */}
-      <div className="flex gap-2 mb-12">
-        {steps.map((_, i) => (
-          <div 
-            key={i} 
-            className={`h-2 flex-1 rounded-full transition-all ${
-              i <= currentStep ? "bg-emerald-600 shadow-[0_0_8px_rgba(5,150,105,0.4)]" : "bg-slate-200"
-            }`}
-          />
-        ))}
-      </div>
+    <ClinicalLayout>
+      <ClinicalHeader 
+        title="Registro de Pensamentos"
+        subtitle="Identifique e desafie pensamentos automáticos para melhorar seu bem-estar emocional."
+        icon={<Brain size={20} />}
+      />
+
+      <ClinicalProgressBar currentStep={currentStep} totalSteps={steps.length} />
 
       <div className="flex-1">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentStep}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="glass-panel p-8 md:p-12 rounded-3xl border border-slate-200 shadow-xl"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
           >
-            <div className="flex items-center gap-3 mb-6 text-emerald-700">
-              <Brain size={24} />
-              <span className="font-bold uppercase tracking-widest text-sm">Passo {currentStep + 1} de {steps.length}</span>
-            </div>
+            <ClinicalCard className="bg-white">
+              <div className="flex items-center gap-3 mb-6 text-emerald-700">
+                <Brain size={24} />
+                <span className="font-black uppercase tracking-widest text-xs">
+                  Passo {currentStep + 1} de {steps.length} • {step.label}
+                </span>
+              </div>
 
-            <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-4 leading-tight">
-              {step.question}
-            </h2>
+              <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-8 leading-tight">
+                {step.question}
+              </h2>
 
-            <textarea
-              autoFocus
-              className="w-full h-48 bg-slate-50 border border-slate-100 rounded-2xl p-6 text-slate-900 text-lg focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all resize-none placeholder:text-slate-300"
-              placeholder={step.placeholder}
-              value={formData[step.id] || ""}
-              onChange={(e) => setFormData({ ...formData, [step.id]: e.target.value })}
-            />
+              <textarea
+                autoFocus
+                className="w-full h-48 bg-slate-50 border border-slate-200 rounded-[2rem] p-8 text-slate-900 text-lg focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all resize-none placeholder:text-slate-300"
+                placeholder={step.placeholder}
+                value={formData[step.id] || ""}
+                onChange={(e) => setFormData({ ...formData, [step.id]: e.target.value })}
+              />
 
-            <div className="mt-8 flex items-start gap-3 p-5 bg-emerald-50 rounded-2xl border border-emerald-100 text-emerald-700 text-sm">
-              <AlertCircle size={20} className="shrink-0" />
-              <p className="font-medium">
-                Este registro ajuda a quebrar o ciclo de pensamentos automáticos que alimentam o estresse e a reatividade emocional.
-              </p>
-            </div>
+              <div className="mt-8 flex items-start gap-4 p-6 bg-emerald-50/50 rounded-3xl border border-emerald-100/50 text-emerald-800 text-sm">
+                <AlertCircle size={20} className="shrink-0 text-emerald-600" />
+                <p className="font-medium leading-relaxed">
+                  Este registro ajuda a quebrar o ciclo de pensamentos automáticos que alimentam o estresse e a reatividade emocional.
+                </p>
+              </div>
+            </ClinicalCard>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Navegação Inferior */}
       <div className="mt-8 flex justify-between items-center">
-        <button
+        <ClinicalButton
+          variant="ghost"
           onClick={handleBack}
-          className="px-8 py-4 rounded-full font-bold text-slate-400 hover:text-emerald-600 transition-colors flex items-center gap-2 active:scale-95"
+          className="text-slate-400"
         >
-          <ChevronLeft size={20} />
+          <ArrowLeft size={20} />
           {currentStep === 0 ? "Cancelar" : "Voltar"}
-        </button>
+        </ClinicalButton>
 
         {currentStep === steps.length - 1 ? (
-          <button
+          <ClinicalButton
             onClick={handleSubmit}
-            disabled={rpdMutation.isPending || !formData[step.id]}
-            className="bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white px-10 py-4 rounded-full font-black shadow-[0_10px_40px_rgba(5,150,105,0.3)] flex items-center gap-2 transition-all active:scale-95"
+            isLoading={rpdMutation.isPending}
+            disabled={!formData[step.id]}
+            icon={<Save size={20} />}
+            className="px-12"
           >
-            {rpdMutation.isPending ? "Salvando..." : "Finalizar Registro"}
-            <Save size={20} />
-          </button>
+            Finalizar Registro
+          </ClinicalButton>
         ) : (
-          <button
+          <ClinicalButton
             onClick={handleNext}
             disabled={!formData[step.id]}
-            className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-10 py-4 rounded-full font-black shadow-[0_10px_40px_rgba(5,150,105,0.2)] flex items-center gap-2 transition-all active:scale-95"
+            icon={<ChevronRight size={20} />}
+            className="px-12"
           >
             Avançar
-            <ChevronRight size={20} />
-          </button>
+          </ClinicalButton>
         )}
       </div>
-    </div>
+    </ClinicalLayout>
   );
 }

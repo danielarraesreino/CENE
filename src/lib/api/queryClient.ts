@@ -1,13 +1,16 @@
 import { QueryClient, defaultShouldDehydrateQuery } from '@tanstack/react-query';
+import { ApiError } from './ApiError';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutos
       gcTime: 30 * 60 * 1000,   // 30 minutos em cache
-      retry: (failureCount, error: any) => {
+      retry: (failureCount, error: unknown) => {
         // Não retentar erros de autenticação ou validação
-        if (error?.status === 401 || error?.status === 400) return false;
+        if (error instanceof ApiError) {
+          if (error.status === 401 || error.status === 400) return false;
+        }
         return failureCount < 2;
       },
       refetchOnWindowFocus: false, // Evitar spam de requests em apps clínicos

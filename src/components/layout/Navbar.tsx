@@ -24,6 +24,8 @@ import {
   GraduationCap
 } from "lucide-react";
 
+import ThemeToggle from "@/components/ui/ThemeToggle";
+
 const clinicalTools = [
   { name: "Registro (RPD)", path: "/portal/paciente/clinical/rpd", icon: Brain },
   { name: "Humor", path: "/portal/paciente/clinical/mood", icon: Activity },
@@ -68,7 +70,7 @@ export default function Navbar() {
   return (
     <nav 
       className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 px-4 md:px-8 py-4 ${
-        isScrolled ? "bg-white/80 backdrop-blur-xl border-b border-slate-200/50 py-3 shadow-sm" : "bg-transparent"
+        isScrolled ? "bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 py-3 shadow-sm" : "bg-transparent"
       }`}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -76,17 +78,17 @@ export default function Navbar() {
         <Link href="/" className="flex items-center gap-2 group">
           <img src="/cene-logo.jpeg" alt="CENE Logo" className="w-10 h-10 rounded-lg object-cover shadow-[0_0_15px_rgba(5,150,105,0.2)] group-hover:scale-105 transition-transform" />
           <div className="hidden sm:block">
-            <span className="text-emerald-900 font-heading font-black text-xl tracking-tight leading-none block">
+            <span className="text-emerald-900 dark:text-emerald-400 font-heading font-black text-xl tracking-tight leading-none block">
               CENE
             </span>
-            <span className="text-[9px] uppercase tracking-wider text-slate-500 font-bold block">
+            <span className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold block">
               Especialização e Desenvolvimento
             </span>
           </div>
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-1 bg-white/70 p-1 rounded-full border border-slate-200/50 backdrop-blur-md shadow-sm">
+        <div className="hidden md:flex items-center gap-1 bg-white/70 dark:bg-slate-800/70 p-1 rounded-full border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-md shadow-sm">
           {/* Main Items Before Dropdown */}
           {mainNavItems.slice(0, 2).map((item) => (
             <NavItem key={item.path} item={item} isActive={pathname === item.path} />
@@ -98,18 +100,18 @@ export default function Navbar() {
               onMouseEnter={() => setToolsDropdownOpen(true)}
               onClick={() => setToolsDropdownOpen(!toolsDropdownOpen)}
               className={`relative px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${
-                pathname.startsWith("/portal/paciente/clinical") ? "text-emerald-900" : "text-slate-500 hover:text-emerald-700"
+                pathname.startsWith("/portal/paciente/clinical") ? "text-emerald-900 dark:text-emerald-100" : "text-slate-500 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400"
               }`}
             >
               {pathname.startsWith("/portal/paciente/clinical") && (
                 <motion.div 
                   layoutId="nav-pill"
-                  className="absolute inset-0 bg-emerald-100 border border-emerald-200 rounded-full"
+                  className="absolute inset-0 bg-emerald-100 dark:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800 rounded-full"
                 />
               )}
-              <Activity size={16} className={pathname.startsWith("/portal/paciente/clinical") ? "text-emerald-600" : ""} />
-              Ferramentas
-              <ChevronDown size={14} className={`transition-transform ${toolsDropdownOpen ? "rotate-180" : ""}`} />
+              <Activity size={16} className={`relative z-10 ${pathname.startsWith("/portal/paciente/clinical") ? "text-emerald-600 dark:text-emerald-400" : ""}`} />
+              <span className="relative z-10">Ferramentas</span>
+              <ChevronDown size={14} className={`relative z-10 transition-transform ${toolsDropdownOpen ? "rotate-180" : ""}`} />
             </button>
 
             <AnimatePresence>
@@ -119,18 +121,18 @@ export default function Navbar() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
                   onMouseLeave={() => setToolsDropdownOpen(false)}
-                  className="absolute top-full left-0 mt-2 w-64 bg-white/95 backdrop-blur-2xl border border-slate-200 rounded-3xl p-3 shadow-2xl overflow-hidden"
+                  className="absolute top-full left-0 mt-2 w-64 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-slate-200 dark:border-slate-700 rounded-3xl p-3 shadow-2xl overflow-hidden"
                 >
                   <div className="grid grid-cols-1 gap-1">
-                    <Link href="/portal/paciente/clinical" className="p-3 mb-2 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-emerald-50 transition-all flex flex-col">
-                      <span className="text-xs font-black uppercase tracking-widest text-emerald-600">Ver Todas</span>
-                      <span className="text-[10px] text-slate-500">Hub Central de Ferramentas</span>
+                    <Link href="/portal/paciente/clinical" className="p-3 mb-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-all flex flex-col">
+                      <span className="text-xs font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Ver Todas</span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400">Hub Central de Ferramentas</span>
                     </Link>
                     {clinicalTools.map((tool) => (
                       <Link 
                         key={tool.path}
                         href={tool.path}
-                        className="flex items-center gap-3 p-3 rounded-2xl text-slate-600 hover:text-emerald-900 hover:bg-slate-50 transition-all"
+                        className="flex items-center gap-3 p-3 rounded-2xl text-slate-600 dark:text-slate-300 hover:text-emerald-900 dark:hover:text-emerald-100 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
                       >
                         <tool.icon size={18} className="text-emerald-500" />
                         <span className="text-sm font-bold">{tool.name}</span>
@@ -150,6 +152,8 @@ export default function Navbar() {
 
         {/* User Actions */}
         <div className="flex items-center gap-3">
+          <ThemeToggle />
+          
           {/* SOS Button - Desktop */}
           <Link href="/portal/paciente/sos" className="hidden lg:block">
             <motion.button
@@ -165,11 +169,11 @@ export default function Navbar() {
           {session ? (
             <div className="flex items-center gap-3">
               <div className="hidden lg:flex flex-col items-end mr-2">
-                <span className="text-xs font-bold text-slate-800 leading-none">{session.user?.name}</span>
-                <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Online</span>
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-none">{session.user?.name}</span>
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-widest">Online</span>
               </div>
               <Link href="/profile">
-                <button className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-600 transition-all">
+                <button className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/50 hover:border-emerald-200 dark:hover:border-emerald-800 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all">
                   <UserIcon size={20} />
                 </button>
               </Link>
@@ -182,7 +186,7 @@ export default function Navbar() {
             </div>
           ) : (
             <Link href="/login">
-              <button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2 rounded-full transition-all shadow-[0_0_15px_rgba(5,150,105,0.3)]">
+              <button className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2 rounded-full transition-all shadow-[0_0_15px_rgba(5,150,105,0.3)]">
                 Entrar
               </button>
             </Link>
@@ -190,7 +194,7 @@ export default function Navbar() {
 
           {/* Mobile Menu Toggle */}
           <button 
-            className="md:hidden w-10 h-10 flex items-center justify-center text-slate-800 bg-white rounded-full shadow-sm"
+            className="md:hidden w-10 h-10 flex items-center justify-center text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800 rounded-full shadow-sm"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X /> : <Menu />}
@@ -205,7 +209,7 @@ export default function Navbar() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className="fixed inset-0 top-[72px] bg-white/95 backdrop-blur-2xl z-[90] p-6 md:hidden overflow-y-auto"
+            className="fixed inset-0 top-[72px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl z-[90] p-6 md:hidden overflow-y-auto"
           >
             <div className="flex flex-col gap-8">
               {/* Main Nav */}
@@ -216,7 +220,7 @@ export default function Navbar() {
                     key={item.path} 
                     href={item.path}
                     className={`flex items-center gap-4 p-4 rounded-3xl ${
-                      pathname === item.path ? "bg-emerald-50 text-emerald-900 border border-emerald-200" : "text-slate-600 bg-slate-50"
+                      pathname === item.path ? "bg-emerald-50 dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 border border-emerald-200 dark:border-emerald-800" : "text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800"
                     }`}
                   >
                     <item.icon size={20} />
@@ -234,7 +238,7 @@ export default function Navbar() {
                       key={tool.path}
                       href={tool.path}
                       className={`flex flex-col items-center justify-center gap-3 p-6 rounded-3xl aspect-square ${
-                        pathname === tool.path ? "bg-emerald-50 text-emerald-900 border border-emerald-200" : "text-slate-600 bg-slate-50"
+                        pathname === tool.path ? "bg-emerald-50 dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 border border-emerald-200 dark:border-emerald-800" : "text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800"
                       }`}
                     >
                       <tool.icon size={24} className="text-emerald-500" />
@@ -251,7 +255,15 @@ export default function Navbar() {
   );
 }
 
-function NavItem({ item, isActive }: { item: any, isActive: boolean }) {
+import { LucideIcon } from 'lucide-react';
+
+interface NavigationItem {
+  name: string;
+  path: string;
+  icon: LucideIcon;
+}
+
+function NavItem({ item, isActive }: { item: NavigationItem, isActive: boolean }) {
   return (
     <Link 
       href={item.path}

@@ -1,42 +1,35 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { clinicalKeys } from "@/lib/api/keys";
 import { toast } from "sonner";
 import { 
-  ChevronLeft, 
   ShieldAlert, 
-  Save, 
   AlertTriangle, 
-  Heart, 
-  Phone, 
-  MapPin, 
+  Users, 
   Plus, 
-  Trash2 
+  Trash2,
+  Heart,
+  Save,
+  Loader2
 } from "lucide-react";
+import { SafetyPlan } from "@/types/clinical";
+
+import { ClinicalLayout } from "@/components/layout/ClinicalLayout";
+import { ClinicalHeader } from "@/components/clinical/ui/ClinicalHeader";
+import { ClinicalCard } from "@/components/clinical/ui/ClinicalCard";
+import { ClinicalButton } from "@/components/clinical/ui/ClinicalButton";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export default function SafetyPlanPage() {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
 
-  // State local para edição do formulário
-  const [plan, setPlan] = useState({
-    warning_signs: [] as string[],
-    coping_strategies: [] as string[],
-    social_contacts: [] as { name: string, phone: string }[],
-    professionals: [] as { name: string, phone: string, specialty: string }[],
-    safe_places: [] as string[],
-    reasons_to_live: [] as string[],
-  });
-
-  // 1. Carregar dados existentes
   const { data, isLoading } = useQuery({
     queryKey: clinicalKeys.list({ type: 'safety-plan' }),
     queryFn: async () => {
@@ -50,16 +43,8 @@ export default function SafetyPlanPage() {
     enabled: !!session?.accessToken,
   });
 
-  // Sincroniza estado local quando os dados chegam
-  useEffect(() => {
-    if (data && data.length > 0) {
-      setPlan(data[0]);
-    }
-  }, [data]);
-
-  // 2. Mutação para salvar
   const saveMutation = useMutation({
-    mutationFn: async (updatedPlan: typeof plan) => {
+    mutationFn: async (updatedPlan: unknown) => {
       const res = await fetch(`${API_URL}/api/clinical/safety-plan/`, {
         method: "POST",
         headers: {
@@ -74,149 +59,163 @@ export default function SafetyPlanPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: clinicalKeys.list({ type: 'safety-plan' }) });
       toast.success("Plano de Segurança atualizado com sucesso!");
-      router.push("/clinical");
+      router.push("/portal/paciente/clinical");
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       console.warn('[REIBB_API_ERROR]', { code: 'SAFETY_PLAN_SAVE_FAILED', message: err.message });
       toast.error(err.message || "Erro ao salvar plano.");
     }
   });
 
-  const handleSave = () => {
-    saveMutation.mutate(plan);
-  };
+  if (isLoading) {
+    return (
+      <ClinicalLayout containerClassName="justify-center items-center">
+        <Loader2 className="animate-spin text-emerald-600" size={48} />
+      </ClinicalLayout>
+    );
+  }
 
-  const addItem = (section: keyof typeof plan, value: any) => {
-    setPlan({ ...plan, [section]: [...(plan[section] as any[]), value] });
+  const initialPlan = data?.[0] || {
+    warning_signs: [],
+    coping_strategies: [],
+    support_network: [],
+    professional_help: [],
+    reasons_to_live: [],
+    safe_places: [],
   };
-
-  const removeItem = (section: keyof typeof plan, index: number) => {
-    const newList = [...(plan[section] as any[])];
-    newList.splice(index, 1);
-    setPlan({ ...plan, [section]: newList });
-  };
-
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center text-white">Carregando plano...</div>;
 
   return (
-    <div className="min-h-screen p-8 md:p-12 max-w-5xl mx-auto w-full flex flex-col">
-      {/* Header */}
-      <div className="mb-12 flex items-center justify-between">
-        <button
-          onClick={() => router.push("/clinical")}
-          className="text-gray-400 hover:text-white flex items-center gap-2 transition-colors"
-        >
-          <ChevronLeft size={20} />
-          Voltar
-        </button>
-        <div className="flex items-center gap-2 text-red-400">
-          <ShieldAlert size={20} />
-          <span className="font-bold uppercase tracking-widest text-xs">Plano de Segurança Emergencial</span>
+    <ClinicalLayout containerClassName="max-w-6xl">
+      <ClinicalHeader 
+        title="Plano de Segurança"
+        subtitle="Seu guia personalizado para momentos de crise. Preencha com calma e mantenha-o sempre atualizado."
+        icon={<ShieldAlert size={20} />}
+      />
+
+      <SafetyPlanForm 
+        key={initialPlan.id || 'new'} 
+        initialPlan={initialPlan} 
+        onSave={(p) => saveMutation.mutate(p)} 
+        isSaving={saveMutation.isPending}
+      />
+    </ClinicalLayout>
+  );
+}
+
+function SafetyPlanForm({ initialPlan, onSave, isSaving }: { initialPlan: SafetyPlan, onSave: (p: SafetyPlan) => void, isSaving: boolean }) {
+  const [plan, setPlan] = useState<SafetyPlan>(initialPlan);
+
+  const addItem = (section: keyof SafetyPlan, value: string) => {
+    const list = (plan[section] || []) as string[];
+    setPlan({ ...plan, [section]: [...list, value] } as SafetyPlan);
+  };
+
+  const removeItem = (section: keyof SafetyPlan, index: number) => {
+    const list = (plan[section] || []) as string[];
+    const newList = [...list];
+    newList.splice(index, 1);
+    setPlan({ ...plan, [section]: newList } as SafetyPlan);
+  };
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Sinais de Alerta */}
+      <ClinicalCard className="bg-white">
+        <div className="flex items-center gap-3 mb-6 text-orange-500">
+          <AlertTriangle size={24} />
+          <h2 className="text-xl font-black uppercase tracking-widest">1. Sinais de Alerta</h2>
         </div>
-      </div>
+        <div className="space-y-3 mb-6">
+          {plan.warning_signs.map((item: string, i: number) => (
+            <div key={i} className="flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-100 group transition-all hover:border-orange-200">
+              <span className="text-slate-600 text-sm font-medium">{item}</span>
+              <button 
+                onClick={() => removeItem("warning_signs", i)} 
+                className="text-slate-300 hover:text-red-500 transition-colors p-1"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ))}
+        </div>
+        <QuickAdd onAdd={(val) => addItem("warning_signs", val)} placeholder="Ex: Começar a me isolar..." />
+      </ClinicalCard>
 
-      <header className="mb-12">
-        <h1 className="text-4xl font-black text-white mb-4">Meu Plano de Segurança</h1>
-        <p className="text-gray-400 max-w-2xl">
-          Este é o seu guia personalizado para momentos de crise. Preencha com calma e mantenha-o atualizado.
-        </p>
-      </header>
+      {/* Estratégias */}
+      <ClinicalCard className="bg-white">
+        <div className="flex items-center gap-3 mb-6 text-emerald-600">
+          <ShieldAlert size={24} />
+          <h2 className="text-xl font-black uppercase tracking-widest">2. Enfrentamento</h2>
+        </div>
+        <div className="space-y-3 mb-6">
+          {plan.coping_strategies.map((item: string, i: number) => (
+            <div key={i} className="flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-100 group transition-all hover:border-emerald-200">
+              <span className="text-slate-600 text-sm font-medium">{item}</span>
+              <button 
+                onClick={() => removeItem("coping_strategies", i)} 
+                className="text-slate-300 hover:text-red-500 transition-colors p-1"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ))}
+        </div>
+        <QuickAdd onAdd={(val) => addItem("coping_strategies", val)} placeholder="Ex: Ouvir música relaxante..." />
+      </ClinicalCard>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
-        {/* Seção: Sinais de Alerta */}
-        <section className="glass-panel p-6 rounded-3xl border border-white/10">
-          <div className="flex items-center gap-3 mb-6 text-yellow-400">
-            <AlertTriangle size={24} />
-            <h2 className="text-xl font-bold">1. Sinais de Alerta</h2>
-          </div>
-          <p className="text-xs text-gray-500 mb-4 italic">Pensamentos, imagens, humores ou comportamentos que indicam que uma crise pode estar começando.</p>
-          <div className="space-y-2 mb-4">
-            {plan.warning_signs.map((item, i) => (
-              <div key={i} className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5">
-                <span className="text-gray-300 text-sm">{item}</span>
-                <button onClick={() => removeItem("warning_signs", i)} className="text-gray-600 hover:text-red-400"><Trash2 size={16} /></button>
-              </div>
-            ))}
-          </div>
-          <QuickAdd onAdd={(val) => addItem("warning_signs", val)} placeholder="Ex: Começar a me isolar..." />
-        </section>
+      {/* Lugares Seguros */}
+      <ClinicalCard className="bg-white">
+        <div className="flex items-center gap-3 mb-6 text-blue-600">
+          <Users size={24} />
+          <h2 className="text-xl font-black uppercase tracking-widest">3. Lugares e Pessoas</h2>
+        </div>
+        <div className="space-y-3 mb-6">
+          {plan.safe_places?.map((item: string, i: number) => (
+            <div key={i} className="flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-100 group transition-all hover:border-blue-200">
+              <span className="text-slate-600 text-sm font-medium">{item}</span>
+              <button 
+                onClick={() => removeItem("safe_places", i)} 
+                className="text-slate-300 hover:text-red-500 transition-colors p-1"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ))}
+        </div>
+        <QuickAdd onAdd={(val) => addItem("safe_places", val)} placeholder="Ex: Praça, casa do amigo..." />
+      </ClinicalCard>
 
-        {/* Seção: Estratégias de Enfrentamento */}
-        <section className="glass-panel p-6 rounded-3xl border border-white/10">
-          <div className="flex items-center gap-3 mb-6 text-emerald-400">
-            <ShieldAlert size={24} />
-            <h2 className="text-xl font-bold">2. O que posso fazer sozinho?</h2>
-          </div>
-          <p className="text-xs text-gray-500 mb-4 italic">Atividades que posso fazer para me distrair da crise sem precisar de ninguém.</p>
-          <div className="space-y-2 mb-4">
-            {plan.coping_strategies.map((item, i) => (
-              <div key={i} className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5">
-                <span className="text-gray-300 text-sm">{item}</span>
-                <button onClick={() => removeItem("coping_strategies", i)} className="text-gray-600 hover:text-red-400"><Trash2 size={16} /></button>
-              </div>
-            ))}
-          </div>
-          <QuickAdd onAdd={(val) => addItem("coping_strategies", val)} placeholder="Ex: Caminhar, ouvir música..." />
-        </section>
+      {/* Razões para Viver */}
+      <ClinicalCard className="bg-white">
+        <div className="flex items-center gap-3 mb-6 text-rose-500">
+          <Heart size={24} />
+          <h2 className="text-xl font-black uppercase tracking-widest">4. Razões para Viver</h2>
+        </div>
+        <div className="space-y-3 mb-6">
+          {plan.reasons_to_live.map((item: string, i: number) => (
+            <div key={i} className="flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-100 group transition-all hover:border-rose-200">
+              <span className="text-slate-600 text-sm font-medium">{item}</span>
+              <button 
+                onClick={() => removeItem("reasons_to_live", i)} 
+                className="text-slate-300 hover:text-red-500 transition-colors p-1"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ))}
+        </div>
+        <QuickAdd onAdd={(val) => addItem("reasons_to_live", val)} placeholder="Ex: Meus filhos, meus sonhos..." />
+      </ClinicalCard>
 
-        {/* Seção: Contatos Sociais */}
-        <section className="glass-panel p-6 rounded-3xl border border-white/10">
-          <div className="flex items-center gap-3 mb-6 text-green-400">
-            <Phone size={24} />
-            <h2 className="text-xl font-bold">3. Contatos de Apoio</h2>
-          </div>
-          <div className="space-y-2 mb-4">
-            {plan.social_contacts.map((item, i) => (
-              <div key={i} className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5">
-                <div>
-                  <div className="text-white text-sm font-bold">{item.name}</div>
-                  <div className="text-gray-500 text-xs">{item.phone}</div>
-                </div>
-                <button onClick={() => removeItem("social_contacts", i)} className="text-gray-600 hover:text-red-400"><Trash2 size={16} /></button>
-              </div>
-            ))}
-          </div>
-          <button 
-            onClick={() => {
-              const name = prompt("Nome:");
-              const phone = prompt("Telefone:");
-              if (name && phone) addItem("social_contacts", { name, phone });
-            }}
-            className="w-full py-3 border-2 border-dashed border-white/10 rounded-xl text-gray-500 hover:text-green-400 hover:border-green-400/50 transition-all flex items-center justify-center gap-2 text-sm font-bold"
-          >
-            <Plus size={16} /> Adicionar Contato
-          </button>
-        </section>
-
-        {/* Seção: Razões para Viver */}
-        <section className="glass-panel p-6 rounded-3xl border border-white/10">
-          <div className="flex items-center gap-3 mb-6 text-pink-400">
-            <Heart size={24} />
-            <h2 className="text-xl font-bold">4. Razões para Viver</h2>
-          </div>
-          <div className="space-y-2 mb-4">
-            {plan.reasons_to_live.map((item, i) => (
-              <div key={i} className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5">
-                <span className="text-gray-300 text-sm">{item}</span>
-                <button onClick={() => removeItem("reasons_to_live", i)} className="text-gray-600 hover:text-red-400"><Trash2 size={16} /></button>
-              </div>
-            ))}
-          </div>
-          <QuickAdd onAdd={(val) => addItem("reasons_to_live", val)} placeholder="Ex: Meus filhos, ver o pôr do sol..." />
-        </section>
-
-      </div>
-
-      <div className="mt-12 mb-20">
-        <button
-          onClick={handleSave}
-          disabled={saveMutation.isPending}
-          className="w-full bg-red-500 hover:bg-red-600 text-white py-5 rounded-3xl font-black text-xl shadow-[0_10px_40px_rgba(239,68,68,0.4)] flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-50"
+      <div className="lg:col-span-2 flex justify-center mt-12">
+        <ClinicalButton
+          onClick={() => onSave(plan)}
+          isLoading={isSaving}
+          icon={<Save size={20} />}
+          className="px-20"
         >
-          {saveMutation.isPending ? "Salvando..." : "Atualizar Meu Plano de Segurança"}
-          <Save size={24} />
-        </button>
+          Salvar Plano de Segurança
+        </ClinicalButton>
       </div>
     </div>
   );
@@ -224,26 +223,28 @@ export default function SafetyPlanPage() {
 
 function QuickAdd({ onAdd, placeholder }: { onAdd: (val: string) => void, placeholder: string }) {
   const [val, setVal] = useState("");
+  const handleAdd = () => {
+    if (val.trim()) {
+      onAdd(val);
+      setVal("");
+    }
+  };
+
   return (
     <div className="flex gap-2">
-      <input 
-        type="text" 
+      <input
+        type="text"
         value={val}
         onChange={(e) => setVal(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && val) {
-            onAdd(val);
-            setVal("");
-          }
-        }}
+        onKeyDown={(e) => e.key === "Enter" && handleAdd()}
         placeholder={placeholder}
-        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-emerald-500 outline-none transition-all"
+        className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-slate-800 text-sm focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/5 transition-all"
       />
       <button 
-        onClick={() => { if (val) { onAdd(val); setVal(""); } }}
-        className="p-2 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all"
+        onClick={handleAdd} 
+        className="bg-slate-900 hover:bg-slate-800 text-white p-3 rounded-2xl transition-all active:scale-95 shadow-lg"
       >
-        <Plus size={20} />
+        <Plus size={24} />
       </button>
     </div>
   );

@@ -7,6 +7,15 @@ import { clinicalKeys } from "@/lib/api/keys";
 import { useCheckInStore, CheckInEntry } from "@/store/useCheckInStore";
 import { toast } from "sonner";
 
+import { AreaProgress } from "@/store/useCheckInStore";
+
+export interface CheckInPayload {
+  cravingLevel: number;
+  mood: "great" | "good" | "neutral" | "bad" | "awful";
+  trigger: string;
+  areas: AreaProgress;
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 interface BackendCheckIn {
@@ -15,12 +24,7 @@ interface BackendCheckIn {
   craving_level: number;
   mood: "great" | "good" | "neutral" | "bad" | "awful";
   trigger: string;
-  areas: {
-    physical: number;
-    mental: number;
-    emotional: number;
-    spiritual: number;
-  };
+  areas: AreaProgress;
 }
 
 /**
@@ -101,7 +105,7 @@ export function useCheckIn() {
 
       return { previousCheckIns };
     },
-    onError: (err: any, newCheckIn, context) => {
+    onError: (err: Error, newCheckIn, context) => {
       // Rollback
       if (context?.previousCheckIns) {
         queryClient.setQueryData(clinicalKeys.list({ type: 'checkin' }), context.previousCheckIns);

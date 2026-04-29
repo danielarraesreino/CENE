@@ -8,7 +8,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { clinicalKeys } from "@/lib/api/keys";
 import { toast } from "sonner";
 import { 
-  ChevronLeft, 
   Smile, 
   Meh, 
   Frown, 
@@ -18,6 +17,11 @@ import {
   Activity,
   CheckCircle2
 } from "lucide-react";
+
+import { ClinicalLayout } from "@/components/layout/ClinicalLayout";
+import { ClinicalHeader } from "@/components/clinical/ui/ClinicalHeader";
+import { ClinicalCard } from "@/components/clinical/ui/ClinicalCard";
+import { ClinicalButton } from "@/components/clinical/ui/ClinicalButton";
 
 const moods = [
   { value: 1, label: "Péssimo", icon: CloudRain, color: "text-red-500", bg: "bg-red-50", hover: "hover:bg-red-100 hover:border-red-300" },
@@ -37,7 +41,7 @@ export default function MoodPage() {
   const [notes, setNotes] = useState("");
 
   const moodMutation = useMutation({
-    mutationFn: async (payload: any) => {
+    mutationFn: async (payload: { mood: number; notes: string; emotions: string[]; activities: string[] }) => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
 
@@ -58,9 +62,8 @@ export default function MoodPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: clinicalKeys.list({ type: 'mood' }) });
       toast.success("Registro de humor salvo com sucesso!");
-      // O redirect agora acontece na UI dependendo do estado isSuccess
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       console.warn('[REIBB_API_ERROR]', { code: 'MOOD_SAVE_FAILED', message: err.message });
       toast.error(err.message || "Erro de conexão ao salvar registro.");
     }
@@ -76,62 +79,44 @@ export default function MoodPage() {
     });
   };
 
-  // Se a mutação foi um sucesso, mostra a tela de sucesso e redireciona
   if (moodMutation.isSuccess) {
-    // Timer para redirecionar após animação
     setTimeout(() => {
       router.push("/portal/paciente/clinical");
     }, 1500);
 
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="glass-panel p-12 rounded-[3rem] text-center max-w-md w-full border border-emerald-200"
-        >
+      <ClinicalLayout containerClassName="justify-center items-center">
+        <ClinicalCard variant="white" className="max-w-md w-full text-center border-emerald-200">
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
             className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6"
           >
             <CheckCircle2 size={48} className="text-emerald-600" />
           </motion.div>
           <h2 className="text-3xl font-black text-slate-900 mb-2">Registro Salvo!</h2>
-          <p className="text-slate-500 font-medium">Redirecionando...</p>
-        </motion.div>
-      </div>
+          <p className="text-slate-500 font-medium">Sua evolução está sendo registrada.</p>
+        </ClinicalCard>
+      </ClinicalLayout>
     );
   }
 
   return (
-    <div className="min-h-screen p-8 md:p-12 max-w-4xl mx-auto w-full flex flex-col">
-      {/* Header */}
-      <div className="mb-12 flex items-center justify-between">
-        <button
-          onClick={() => router.push("/portal/paciente/clinical")}
-          className="text-slate-500 hover:text-emerald-700 font-bold flex items-center gap-2 transition-colors"
-        >
-          <ChevronLeft size={20} />
-          Voltar para Ferramentas
-        </button>
-        <div className="flex items-center gap-2 text-emerald-700">
-          <Activity size={20} />
-          <span className="font-bold uppercase tracking-widest text-xs">Diário de Humor</span>
-        </div>
-      </div>
+    <ClinicalLayout>
+      <ClinicalHeader 
+        title="Diário de Humor"
+        subtitle="O registro diário ajuda a identificar gatilhos e padrões de comportamento importantes para sua jornada."
+        icon={<Activity size={20} />}
+      />
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-panel p-8 md:p-12 rounded-[3rem] border border-slate-200 text-center bg-white"
-      >
-        <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-4">Como você está se sentindo hoje?</h1>
-        <p className="text-slate-600 mb-12 text-lg">O registro diário ajuda a identificar gatilhos e padrões de comportamento.</p>
+      <ClinicalCard className="bg-white">
+        <h2 className="text-2xl font-black text-slate-900 mb-8 text-center">
+          Como você está se sentindo hoje?
+        </h2>
 
         {/* Seleção de Humor */}
-        <div className="flex flex-wrap justify-center gap-4 mb-12">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap justify-center gap-4 mb-12">
           {moods.map((m) => {
             const Icon = m.icon;
             const isSelected = selectedMood === m.value;
@@ -139,14 +124,14 @@ export default function MoodPage() {
               <button
                 key={m.value}
                 onClick={() => setSelectedMood(m.value)}
-                className={`flex flex-col items-center p-6 w-[110px] rounded-3xl border-2 transition-all ${
+                className={`flex flex-col items-center p-6 min-w-[110px] flex-1 md:flex-none rounded-3xl border-2 transition-all ${
                   isSelected 
-                    ? `border-emerald-500 bg-emerald-50 scale-110 shadow-[0_15px_30px_rgba(5,150,105,0.2)]` 
+                    ? `border-emerald-500 bg-emerald-50 scale-105 shadow-lg` 
                     : `border-slate-100 bg-white ${m.hover}`
                 }`}
               >
                 <Icon size={48} className={isSelected ? "text-emerald-600" : "text-slate-400"} />
-                <span className={`mt-4 text-sm font-black uppercase tracking-wider ${
+                <span className={`mt-4 text-xs font-black uppercase tracking-wider ${
                   isSelected ? "text-slate-900" : "text-slate-500"
                 }`}>
                   {m.label}
@@ -169,15 +154,18 @@ export default function MoodPage() {
           />
         </div>
 
-        <button
-          onClick={handleSubmit}
-          disabled={moodMutation.isPending || selectedMood === null}
-          className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:text-slate-500 text-white px-14 py-5 rounded-full font-black text-lg shadow-[0_10px_40px_rgba(5,150,105,0.3)] disabled:shadow-none flex items-center justify-center gap-3 transition-all mx-auto active:scale-95"
-        >
-          {moodMutation.isPending ? "Registrando..." : "Salvar Registro"}
-          {!moodMutation.isPending && <Save size={22} />}
-        </button>
-      </motion.div>
-    </div>
+        <div className="flex justify-center">
+          <ClinicalButton
+            onClick={handleSubmit}
+            isLoading={moodMutation.isPending}
+            disabled={selectedMood === null}
+            icon={<Save size={22} />}
+            className="w-full md:w-auto px-14"
+          >
+            {moodMutation.isPending ? "Registrando..." : "Salvar Registro"}
+          </ClinicalButton>
+        </div>
+      </ClinicalCard>
+    </ClinicalLayout>
   );
 }

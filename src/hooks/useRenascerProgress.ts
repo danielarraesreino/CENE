@@ -3,6 +3,7 @@
 import { useCallback, useMemo } from "react";
 import { useProgressStore } from "@/store/useProgressStore";
 import { useBackendSync } from "./useBackendSync";
+import { toast } from "sonner";
 
 /**
  * useRenascerProgress — hook orquestrador principal.
@@ -20,7 +21,14 @@ export function useRenascerProgress() {
   ) => {
     completeStep(trailId, step);
     // Sincroniza depois de atualizar o estado local
-    await syncTrails(useProgressStore.getState().trails);
+    try {
+      await syncTrails(useProgressStore.getState().trails);
+    } catch (err) {
+      console.warn('[REIBB] Falha ao sincronizar progresso com backend:', err);
+      toast.error('Progresso salvo localmente. Sincronização pendente quando a conexão for restaurada.', {
+        duration: 5000,
+      });
+    }
   }, [completeStep, syncTrails]);
 
   /** Percentual global de conclusão */
@@ -53,12 +61,24 @@ export function useRenascerProgress() {
     )
   , [trails]);
 
+  /** Busca progresso do backend com tratamento de erro explícito */
+  const fetchProgressSafe = useCallback(async () => {
+    try {
+      await fetchProgress();
+    } catch (err) {
+      console.warn('[REIBB] Falha ao buscar progresso do backend:', err);
+      toast.error('Não foi possível carregar seu progresso. Verifique sua conexão.', {
+        duration: 5000,
+      });
+    }
+  }, [fetchProgress]);
+
   return {
     trails,
     trailsByCategory,
     completionPercent,
     nextTrail,
     handleStepComplete,
-    fetchProgress,
+    fetchProgress: fetchProgressSafe,
   };
 }

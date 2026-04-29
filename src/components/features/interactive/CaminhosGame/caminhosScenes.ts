@@ -1,4 +1,24 @@
-export const caminhosScenes: Record<string, any> = {
+interface Choice {
+  text: string;
+  resEffect?: number;
+  socEffect?: number;
+  item?: {
+    icon: string;
+    name: string;
+    desc: string;
+  };
+  nextScene?: string;
+}
+
+interface Scene {
+  speaker?: string;
+  text: string;
+  emoji?: string;
+  bgColor?: string;
+  choices: Choice[];
+}
+
+export const caminhosScenes: Record<string, Scene> = {
   "cena1": {
     "speaker": "Pensamentos",
     "text": "A luz da manhã entra pela janela. Hoje é o dia de começar a oficina no Instituto Padre Haroldo. O cansaço é grande, mas a oportunidade também.",
@@ -1106,8 +1126,7 @@ export const caminhosScenes: Record<string, any> = {
           "icon": "🎓",
           "name": "Diploma de Superação",
           "desc": "A prova da sua resiliência."
-        },
-        "nextScene": null
+        }
       }
     ]
   }

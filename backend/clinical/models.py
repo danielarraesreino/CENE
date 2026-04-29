@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from datetime import date
 import json
 import base64
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -117,7 +118,7 @@ class Goal(models.Model):
     description = EncryptedField(null=True, blank=True)
     category = models.CharField(max_length=50) # Saude, Relacionamentos, etc.
     
-    start_date = models.DateField(default=timezone.now)
+    start_date = models.DateField(default=date.today)
     end_date = models.DateField(null=True, blank=True)
     
     target_value = models.IntegerField(null=True, blank=True)

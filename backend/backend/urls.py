@@ -27,8 +27,11 @@ urlpatterns = [
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/", include("lms.urls")),
-    path("api/trails/", include("content.urls")),
+    path("api/content/", include("content.urls")),
     path("api/checkin/", include("checkin.urls")),
     path("api/rag/", include("rag.urls")),
     path("api/clinical/", include("clinical.urls")),
+    path("api/progress/", include("progress.urls")),
+    path("api/instructor/", include("instructor.analytics.urls")),
+    path("api/push/", include("push.urls")),
 ]

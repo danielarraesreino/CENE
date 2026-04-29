@@ -1,0 +1,49 @@
+{
+  "cookies": [
+    {
+      "name": "next-auth.csrf-token",
+      "value": "a7deb935083b5d9bf63e259d0d0081755b532ef74408d16180d12ca4711db1a2%7C45a58821c4eeb1c4c0a43a1eeb50bbb3e835f1407a7ab0247db925cd063c8a06",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "next-auth.callback-url",
+      "value": "http%3A%2F%2Flocalhost%3A3000%2Flogin",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "next-auth.session-token",
+      "value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0..off3qNrbCcqcqsiE.w7raUOtogaeuztYqUav9vnIEeGFr470Cw2VFiaMLMDCWhBDOxyBkv5TzXiZot-WDzC7qMEKujGa0AyCHpAo7ByKmu4Y88H82rUM6ryao-dtjTz0zDj7hG6vdSRixWNMlhMZ4UQng593piMwu0lQ963wuqzS2lOay6mo4AoQqCm7HVwcbLJGFVd-RIMWl7mySRDnqbGVW6beTRwrh1aV6oR6RAN7NuALBlKh20heJzh6DQiQn009pQI_3YH93hm3oDyIRMgSte12G70wWOczO9HPtAiY5P734jB4AnQEL_E5BczGVYqSJn624FGl4X9Is9ioDUoqLTC_WsFcJkIEuLvIf5f3RQxqcfnYGUvoBq55Ab-HSC3RgoYan8N0SNMMqpv4Jkhmm8wE5lc-B2AeSOUZy7WZ2sXi42SKeLfugC_dR7_npV7uo2A-QYqPLVzv9BPLMpz68yPIuhC6uRNDBc6v2xQS8wL1-VyaCgY5qyZN4cSnEIY2EjFw-SLYx5tKa9gM_YZCLaktqnl62GCHmhnqmQDBVBp0J2F_X8kxz23vwaJfKc00xq8iBSVuMpjidX_gPevBBeRx4dIR7hX-WPyXKdA4qs7q6IC1cUPzGgA6AOytBBlJcCS35N8UuitEb4bdOds_IfnP42aUiUJRZzKfVo2zWtOOHUGbYY1X8d_R5DZssGnEES8QglSj2oCYCuShrxkpIJRHvQBTkDpR-IAideWg0VM5fmViriFvn1IfI1Ozhz9k6JjeL50Hag0mhJkG5zO4rydXF-lz3v1pjFwJxQH6aYbVNkJN1eXGojKrFwiXGmcM9.OOid1ZlqHZ1DdMe-u7tEgA",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1780048258.060651,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "http://localhost:3000",
+      "localStorage": [
+        {
+          "name": "nextauth.message",
+          "value": "{\"event\":\"session\",\"data\":{\"trigger\":\"getSession\"},\"timestamp\":1777456255}"
+        },
+        {
+          "name": "renascer-progress-v1",
+          "value": "{\"state\":{\"trails\":[{\"id\":1,\"title\":\"A Gênese do Rei Bebê\",\"category\":\"Fundamentos\",\"isUnlocked\":true,\"isPremium\":false,\"status\":\"idle\",\"progress\":{\"ouvir\":false,\"estudar\":false,\"avaliar\":false}},{\"id\":2,\"title\":\"Máscaras e Mitos\",\"category\":\"Fundamentos\",\"isUnlocked\":false,\"isPremium\":false,\"status\":\"idle\",\"progress\":{\"ouvir\":false,\"estudar\":false,\"avaliar\":false}},{\"id\":3,\"title\":\"O Ciclo Vicioso\",\"category\":\"Fundamentos\",\"isUnlocked\":false,\"isPremium\":false,\"status\":\"idle\",\"progress\":{\"ouvir\":false,\"estudar\":false,\"avaliar\":false}},{\"id\":4,\"title\":\"O Ponto de Ruptura\",\"category\":\"Fundamentos\",\"isUnlocked\":false,\"isPremium\":false,\"status\":\"idle\",\"progress\":{\"ouvir\":false,\"estudar\":false,\"avaliar\":false}},{\"id\":5,\"title\":\"Curando a Criança\",\"category\":\"Emoções\",\"isUnlocked\":false,\"isPremium\":true,\"status\":\"idle\",\"progress\":{\"ouvir\":false,\"estudar\":false,\"avaliar\":false}},{\"id\":6,\"title\":\"Ferramentas de Reconstrução\",\"category\":\"Emoções\",\"isUnlocked\":false,\"isPremium\":true,\"status\":\"idle\",\"progress\":{\"ouvir\":false,\"estudar\":false,\"avaliar\":false}},{\"id\":7,\"title\":\"Gestão de Recaída\",\"category\":\"Recaída\",\"isUnlocked\":false,\"isPremium\":true,\"status\":\"idle\",\"progress\":{\"ouvir\":false,\"estudar\":false,\"avaliar\":false}}]},\"version\":0}"
+        }
+      ]
+    }
+  ]
+}

@@ -135,8 +135,8 @@ export function CaminhosGame({ onComplete }: CaminhosGameProps) {
               </div>
               <div>
                 <TypewriterText 
+                  key={currentSceneId}
                   text={currentScene!.text} 
-                  sceneId={currentSceneId} 
                   onTypingStateChange={setIsTyping}
                 />
               </div>
@@ -225,19 +225,15 @@ export function CaminhosGame({ onComplete }: CaminhosGameProps) {
 
 function TypewriterText({ 
   text, 
-  sceneId, 
   onTypingStateChange 
 }: { 
   text: string; 
-  sceneId: string;
   onTypingStateChange: (isTyping: boolean) => void;
 }) {
   const [typedText, setTypedText] = useState('');
 
   useEffect(() => {
-    setTypedText('');
-    
-    
+    onTypingStateChange(true);
     let currentText = '';
     let i = 0;
     
@@ -255,7 +251,7 @@ function TypewriterText({
     return () => {
       clearInterval(interval);
     };
-  }, [text, sceneId, onTypingStateChange]);
+  }, [text, onTypingStateChange]);
 
   return (
     <p className="text-zinc-300 text-lg leading-relaxed min-h-[100px]">
