@@ -29,3 +29,4 @@ cryptography
 python-json-logger
 psycopg2-binary>=2.9.0
 python-dotenv>=1.0.0
+bleach>=6.1.0

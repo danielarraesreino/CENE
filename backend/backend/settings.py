@@ -47,7 +47,6 @@ INSTALLED_APPS = [
     "checkin",
     "rag",
     "clinical",
-    "bleach",
     "progress",
     "instructor",
     "push",
