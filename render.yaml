@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: reibb-backend
+    env: python
+    buildCommand: "./backend/build.sh"
+    startCommand: "cd backend && gunicorn backend.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: "*"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://cene.vercel.app,http://localhost:3000" # Update this to your vercel app domain later
+      - key: DATABASE_URL
+        fromDatabase:
+          name: reibb-postgres
+          property: connectionString
+      # Add VAPID and Gemini keys later
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+
+databases:
+  - name: reibb-postgres
+    databaseName: reibb_db
+    user: reibb_user
+    plan: free
