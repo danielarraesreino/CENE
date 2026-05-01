@@ -14,7 +14,8 @@ export type TrailType =
   | 'quiz'          // Perguntas de validação
   | 'video'         // Player de áudio/vídeo com reflexão
   | 'breathing'     // Guia de respiração Box Breathing
-  | 'reflection';   // Pergunta aberta para reflexão escrita
+  | 'reflection'    // Pergunta aberta para reflexão escrita
+  | 'interactive';  // Componente interativo avançado (delegado por ID de trilha)
 
 // ─── Schema de Conteúdo por Tipo ────────────────────────────────────────────
 

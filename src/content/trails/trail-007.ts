@@ -8,8 +8,8 @@ import { TrailConfig } from "@/types/trail-content";
  * paciente com um protocolo claro de resposta e retomada. Esta é a trilha
  * de conclusão — ao terminar o quiz com aprovação, o certificado é gerado.
  *
- * Renderer: quiz — avaliação de conhecimento com feedback clínico em cada
- * resposta. Score mínimo de 70% para completar e desbloquear o certificado.
+ * Renderer: interactive — usa o componente Trail7Interactive para a aba Estudar.
+ * Aba Avaliar usa o quizContent abaixo.
  */
 export const trail007: TrailConfig = {
   id: 7,
@@ -20,8 +20,13 @@ export const trail007: TrailConfig = {
   audioUrl: "/audio/GESTAO_DE_RECAIDA.MP3",
   intro:
     "Recaída não é derrota — é dados. É uma informação valiosa sobre o que ainda precisa ser trabalhado. Esta trilha finaliza sua jornada com os protocolos de resposta e o Plano de Manutenção da Sobriedade.",
-  type: "quiz",
+  type: "interactive",
   content: {
+    // Conteúdo exibido pelo Trail7Interactive (Rádio Stinking Thinking, Radar de Recaída, Plano de Manutenção)
+    // O engine delega para Trail7Interactive via type='interactive' + id=7
+    stages: []
+  },
+  quizContent: {
     passingScore: 70,
     questions: [
       {

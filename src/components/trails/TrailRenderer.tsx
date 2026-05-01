@@ -19,6 +19,10 @@ import { QuizRenderer } from "./renderers/QuizRenderer";
 import { ReflectionRenderer } from "./renderers/ReflectionRenderer";
 import { BreathingRenderer } from "./renderers/BreathingRenderer";
 
+// Componentes interativos ricos (legacy migrados)
+import { Trail3Interactive } from "@/components/Trails/Trail3Interactive";
+import { Trail7Interactive } from "@/components/Trails/Trail7Interactive";
+
 interface TrailRendererProps {
   trail: TrailConfig;
   onComplete: () => void;
@@ -69,6 +73,14 @@ export function TrailRenderer({ trail, onComplete }: TrailRendererProps) {
 
         {type === "reflection" && isReflection(content) && (
           <ReflectionRenderer data={content} onComplete={onComplete} />
+        )}
+
+        {/* Renderer interativo avançado: delega para componentes ricos por ID */}
+        {type === "interactive" && trail.id === 3 && (
+          <Trail3Interactive onComplete={onComplete} />
+        )}
+        {type === "interactive" && trail.id === 7 && (
+          <Trail7Interactive onComplete={onComplete} />
         )}
       </motion.div>
     </AnimatePresence>

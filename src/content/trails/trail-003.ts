@@ -7,25 +7,11 @@ export const trail003: TrailConfig = {
   order: 3,
   audioUrl: "/audio/trilha-003.mp3",
   intro: "Compreenda como a mente dependente entra em loops autodestrutivos e como quebrar esses padrões.",
-  type: "narrative",
+  type: "interactive",
   content: {
-    stages: [
-      {
-        id: "habit",
-        title: "Anatomia do Hábito",
-        description: "O ciclo vicioso começa no pensamento, cresce no sentimento e culmina na ação. Entender os 'Três S' (Sentir, Sofrer, Servir ao vício) é crucial."
-      },
-      {
-        id: "trigger",
-        title: "O Gatilho e a Fissura",
-        description: "Identificar o evento externo ou interno que inicia o pensamento obsessivo é a primeira linha de defesa contra a queda."
-      },
-      {
-        id: "interruption",
-        title: "Interrompendo o Fluxo",
-        description: "Técnicas como Adiar e Substituir permitem intervir na fase crítica entre o desejo e a ação, quebrando o automatismo."
-      }
-    ]
+    // Conteúdo exibido pelo Trail3Interactive (componente hardcoded rico)
+    // O engine delega para Trail3Interactive via type='interactive' + id=3
+    stages: []
   },
   quizContent: {
     questions: [
