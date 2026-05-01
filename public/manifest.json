@@ -3,6 +3,7 @@
   "short_name": "Reibb",
   "description": "Plataforma de educação clínica e apoio para populações em situação de vulnerabilidade.",
   "start_url": "/portal/paciente",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
@@ -31,7 +32,7 @@
       "name": "Meus Cursos",
       "short_name": "Cursos",
       "description": "Acessar cursos em andamento",
-      "url": "/cursos",
+      "url": "/portal/paciente",
       "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
     },
     {
