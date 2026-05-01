@@ -1,5 +1,5 @@
 from rest_framework import viewsets, permissions, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from django.db import transaction
 from django.contrib.auth import get_user_model
@@ -7,6 +7,18 @@ from lms.models import TrailProgress
 from lms.serializers import UserSerializer, TrailProgressSerializer, RegisterSerializer
 
 User = get_user_model()
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def bootstrap_test_user(request):
+    username = 'aluno_teste'
+    password = 'senha_teste_2026'
+    email = 'aluno@exemplo.com'
+    
+    if not User.objects.filter(username=username).exists():
+        User.objects.create_user(username=username, password=password, email=email, is_premium=True)
+        return Response({"message": f"User {username} created successfully."})
+    return Response({"message": f"User {username} already exists."})
 
 class UserViewSet(viewsets.GenericViewSet):
     permission_classes = [permissions.IsAuthenticated]
