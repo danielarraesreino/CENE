@@ -1,4 +1,5 @@
 import logging
+import sentry_sdk
 from django.http import JsonResponse
 from django.conf import settings
 from rest_framework import status
@@ -20,7 +21,11 @@ class GlobalExceptionMiddleware:
             response = self.get_response(request)
             return response
         except Exception as e:
-            # Identifica o tipo de erro para o log
+            # Captura no Sentry explicitamente se não estiver em DEBUG
+            if not settings.DEBUG:
+                sentry_sdk.capture_exception(e)
+                
+            # Identifica o tipo de erro para o log local
             error_type = e.__class__.__name__
             logger.error(f"[{error_type}] Erro não tratado: {str(e)}", exc_info=True)
             

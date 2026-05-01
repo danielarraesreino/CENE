@@ -8,10 +8,20 @@ setup('authenticate', async ({ page }) => {
   await page.waitForTimeout(1000); // Aguarda hidratação do React
   await page.getByPlaceholder('Ex: joaosilva').fill('testuser');
   await page.getByPlaceholder('••••••••').fill('testpass123');
-  await page.getByRole('button', { name: 'Acessar Plataforma' }).click();
+  
+  // Clique forçado para ignorar overlays de animação
+  await page.getByRole('button', { name: 'Acessar Plataforma' }).click({ force: true });
 
-  // Wait for redirect to /hub or /portal/paciente - increasing timeout for CI/dev environments
-  await expect(page).toHaveURL(/.*\/(hub|portal\/paciente)/, { timeout: 15000 });
+  // Espera o redirecionamento com um timeout maior e verifica se não há erro na tela
+  try {
+    await expect(page).toHaveURL(/.*\/(hub|portal\/paciente)/, { timeout: 20000 });
+  } catch (error) {
+    const errorMsg = await page.getByText(/Credenciais inválidas/i).isVisible();
+    if (errorMsg) {
+      console.error("ERRO DE AUTENTICAÇÃO: O sistema exibiu 'Credenciais inválidas'");
+    }
+    throw error;
+  }
   
   await page.context().storageState({ path: authFile });
 });

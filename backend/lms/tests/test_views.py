@@ -11,14 +11,16 @@ def test_get_me(auth_client, test_user):
 
 @pytest.mark.django_db
 def test_sync_progress(auth_client, test_user):
-    url = reverse('trails-sync-progress')
+    url = reverse('trails-sync')
     data = {
         'trails': [
             {
                 'id': 1,
                 'isUnlocked': True,
                 'status': 'completed',
-                'progress': {'ouvir': True, 'estudar': True, 'avaliar': True}
+                'ouvir': True,
+                'estudar': True,
+                'avaliar': True
             }
         ]
     }

@@ -9,9 +9,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 <!-- BEGIN:reibb-agents -->
 # Agentes de Manutenção — Reibb LMS (CENE)
 
-Este arquivo define os **5 agentes especializados** responsáveis pela manutenção e evolução da plataforma Reibb. Cada agente tem missão, escopo e checklists específicos. Toda IA que trabalhar neste repositório deve ler e seguir as diretrizes do agente relevante para a tarefa.
+Este arquivo define os **6 agentes especializados** responsáveis pela manutenção e evolução da plataforma Reibb. Cada agente tem missão, escopo e checklists específicos. Toda IA que trabalhar neste repositório deve ler e seguir as diretrizes do agente relevante para a tarefa.
 
-> Gerado na auditoria de integridade de 2026-04-29. Fonte da verdade: `GEMINI.md`.
+> Atualizado na auditoria de infraestrutura de 2026-04-30. Fonte da verdade: `GEMINI.md`.
 
 ---
 
@@ -22,63 +22,19 @@ Este arquivo define os **5 agentes especializados** responsáveis pela manutenç
 **Escopo:**
 - React Error Boundaries (frontend)
 - `GlobalExceptionMiddleware` (Django backend)
+- **Integração Sentry (Logs remotos)**
 - Validação defensiva de props e respostas de API
 - Timeouts explícitos em chamadas a LLMs e TTS
 
-**Pontos críticos identificados (auditoria 2026-04-29):**
-
-*Frontend:*
-- ✅ `ErrorBoundary` em `src/components/Providers/ErrorBoundary.tsx` — implementado no root layout
-- ✅ `GlobalErrorToast` em `src/components/GlobalErrorToast.tsx` — implementado
-- ⚠️ `useRenascerProgress`: se `fetchProgress()` falhar (backend offline), o componente fica silencioso → adicionar `.catch()` com toast de erro
-- ⚠️ `useRagChat`: chamadas ao Gemini sem timeout explícito → pode bloquear indefinidamente
-- ⚠️ `ClinicoCopilotWrapper`: sem fallback visual próprio → needs own ErrorBoundary wrapper
-
-*Backend:*
-- ✅ `GlobalExceptionMiddleware` em `backend/backend/middleware.py` — implementado
-- ⚠️ `push/utils.py`: `WebPushException` pode ser levantada sem fallback quando token expirar
-- ⚠️ `rag/`: sem timeout nas chamadas `google-generativeai` → risco de thread Gunicorn bloquear
-
-**Padrão de timeout (backend):**
-```python
-# backend/rag/views.py
-import signal
-
-def timeout_handler(signum, frame):
-    raise TimeoutError("LLM call exceeded 15s")
-
-signal.signal(signal.SIGALRM, timeout_handler)
-signal.alarm(15)
-try:
-    response = model.generate_content(prompt)
-finally:
-    signal.alarm(0)
-```
-
-**Padrão de timeout (frontend):**
-```typescript
-// src/hooks/useRagChat.ts
-const controller = new AbortController();
-const timeoutId = setTimeout(() => controller.abort(), 15000);
-const response = await fetch('/api/rag/chat', { signal: controller.signal });
-clearTimeout(timeoutId);
-```
-
-**Padrão de resposta de erro (Django):**
-```json
-{
-  "error": {
-    "code": "LESSON_LOCKED",
-    "message": "Aula bloqueada: pré-requisito não concluído.",
-    "detail": {}
-  }
-}
-```
+**Checklist de Observabilidade:**
+- [ ] O erro foi capturado pelo Sentry?
+- [ ] Existe um fallback visual para este componente?
+- [ ] O log contém o `trace_id` para correlação frontend-backend?
 
 **Arquivos de referência:**
 - `src/components/Providers/ErrorBoundary.tsx`
 - `backend/backend/middleware.py`
-- `src/components/GlobalErrorToast.tsx`
+- `src/sentry.client.config.ts`
 
 ---
 
@@ -101,9 +57,6 @@ clearTimeout(timeoutId);
 
 **Componentes que DEVEM usar dynamic imports:**
 ```typescript
-// ❌ Atual (estático)
-import { Trail3Interactive } from '@/components/Trails/Trail3Interactive';
-
 // ✅ Correto (lazy)
 const Trail3Interactive = dynamic(
   () => import('@/components/Trails/Trail3Interactive'),
@@ -111,17 +64,10 @@ const Trail3Interactive = dynamic(
 );
 ```
 
-Aplicar para: `Trail2Interactive` até `Trail7Interactive`, `CaminhosDaSuperacao`, `@react-pdf/renderer`.
-
-**Diagnóstico de bundle:**
-```bash
-ANALYZE=true npm run build
-```
-
 **Arquivos de referência:**
-- `next.config.ts` — configuração Turbopack/Webpack
-- `src/app/layout.tsx` — exemplos de dynamic import correto
-- `package.json` — dependências pesadas mapeadas
+- `next.config.ts`
+- `src/app/layout.tsx`
+- `package.json`
 
 ---
 
@@ -143,47 +89,14 @@ ANALYZE=true npm run build
 
 **Query N+1 — padrão correto:**
 ```python
-# ❌ Errado
-lesson = Lesson.objects.get(pk=pk)
-course = lesson.module.course  # 2 queries extras!
-
 # ✅ Correto
 lesson = Lesson.objects.select_related('module__course').get(pk=pk)
-```
-
-**Analytics — padrão correto:**
-```python
-# ❌ Errado
-for enrollment in course.enrollments.all():
-    progress = LessonProgress.objects.filter(user=enrollment.user)  # N queries!
-
-# ✅ Correto
-from django.db.models import Count, Avg
-LessonProgress.objects.filter(
-    lesson__module__course=course
-).values('lesson').annotate(
-    completion_count=Count('user'),
-    avg_time=Avg('time_spent_seconds')
-)
-```
-
-**Operações que DEVEM ser atômicas:**
-```python
-# progress/signals.py
-@transaction.atomic
-def on_lesson_complete(sender, instance, **kwargs):
-    # 1. Registrar progresso
-    # 2. Verificar se próxima aula foi desbloqueada
-    # 3. Disparar notificação push
-    pass
 ```
 
 **Arquivos de referência:**
 - `backend/content/models.py`
 - `backend/progress/models.py`
 - `backend/progress/signals.py`
-- `backend/content/views.py`
-- `backend/instructor/views.py`
 
 ---
 
@@ -202,44 +115,16 @@ def on_lesson_complete(sender, instance, **kwargs):
 --slate-50:  #f8fafc;    /* background global */
 --slate-600: #475569;    /* corpo de texto */
 --slate-900: #0f172a;    /* texto principal */
-
-/* Accent */
---brand-accent: #8b5cf6; /* violeta — trilhas de aprendizado */
---brand-pink:   #ec4899; /* detalhe clínico */
-
-/* Status */
---success: #10b981; --error: #ef4444; --warning: #f59e0b; --info: #3b82f6;
 ```
 
 **Tipografia:**
 - Headings: `Outfit` (font-black, tracking-tight)
 - Body: `Inter` (text-slate-600, leading-relaxed)
-- Labels: `text-sm font-bold uppercase tracking-widest text-slate-500`
-
-**Border-radius padrão:**
-- Painel principal: `rounded-[3rem]` | Card: `rounded-3xl` | Botão/Input: `rounded-full`
-
-**Micro-animações (framer-motion):**
-```typescript
-// Entrada de card
-initial={{ opacity: 0, y: 20 }}
-animate={{ opacity: 1, y: 0 }}
-transition={{ duration: 0.4 }}
-
-// Hover
-whileHover={{ scale: 1.02, y: -5 }}
-whileTap={{ scale: 0.98 }}
-```
-
-**Violações identificadas (auditoria 2026-04-29):**
-- ⚠️ `src/app/portal/paciente/page.tsx` — alguns tokens do tema escuro antigo ainda presentes (`bg-black`, `text-brand-cyan`, `bg-white/10`)
-- ✅ `src/app/page.tsx` (Landing CENE) — 100% light emerald correto
-- ✅ `src/components/layout/Navbar.tsx` — light emerald + glassmorphism correto
 
 **Arquivos de referência:**
-- `src/styles/design-tokens.ts` — fonte da verdade
-- `src/app/globals.css` — CSS custom properties
-- `src/components/layout/Navbar.tsx` — componente modelo
+- `src/styles/design-tokens.ts`
+- `src/app/globals.css`
+- `src/components/layout/Navbar.tsx`
 
 ---
 
@@ -249,51 +134,8 @@ whileTap={{ scale: 0.98 }}
 
 **Estado dos testes (auditoria 2026-04-29):**
 - ✅ Backend Pytest: 4/4 passando (`test_lesson_unlock.py`)
-- ⚠️ Frontend Vitest: 0 testes implementados (apenas setup jsdom)
-- ⏳ E2E Playwright: arquivos existem mas não foram executados na auditoria
-
-**Gaps de cobertura (prioridade ALTA):**
-
-*Backend:*
-- [ ] `checkin/views.py` — POST check-in
-- [ ] `clinical/views.py` — CRUD RPD, Metas, Gatilhos
-- [ ] `instructor/views.py` — analytics endpoint
-- [ ] `push/views.py` — subscrição push
-- [ ] `rag/views.py` — chat IA (requer mock do Gemini)
-
-*Frontend:*
-- [ ] `useCheckIn` hook — loading/error/success
-- [ ] `useLessonProgress` hook — sync offline→online
-- [ ] `ErrorBoundary` — exibe fallback ao crashar
-- [ ] `Navbar` — oculta em /login e /register
-
-**Diretrizes de Manutenção Contínua (Mandatório):**
-1. **Validação E2E/Unitária:** Ao criar/modificar UI ou endpoints, a IA *deve* revalidar o escopo rodando `npm run test:e2e` ou `npm test` localmente.
-2. **Documentação de Tarefas:** Toda sessão de alteração em testes ou endpoints deve manter o `task.md` atualizado e registrar os artefatos corrigidos/validados no `walkthrough.md` ao final.
-
-**Template backend:**
-```python
-@pytest.mark.django_db
-def test_checkin_creates_record(auth_client, test_user):
-    payload = {"mood": 7, "notes": "Me sinto bem"}
-    response = auth_client.post("/api/checkin/", payload, format="json")
-    assert response.status_code == 201
-    assert response.data["mood"] == 7
-```
-
-**Template frontend (hook):**
-```typescript
-import { renderHook } from '@testing-library/react';
-import { useCheckIn } from '@/hooks/useCheckIn';
-
-describe('useCheckIn', () => {
-  it('deve retornar estado inicial correto', () => {
-    const { result } = renderHook(() => useCheckIn());
-    expect(result.current.isLoading).toBe(false);
-    expect(result.current.lastCheckIn).toBeNull();
-  });
-});
-```
+- ⚠️ Frontend Vitest: 0 testes implementados
+- ⏳ E2E Playwright: arquivos existem
 
 **Comandos:**
 ```bash
@@ -302,17 +144,49 @@ cd backend && python -m pytest tests/ -v --cov=. --cov-report=html
 
 # Frontend
 npm test
-npm run test:coverage
 
-# E2E (requer ambos servidores ativos)
+# E2E
 npm run test:e2e
 ```
 
-**Arquivos de referência:**
-- `backend/tests/test_lesson_unlock.py` — template backend
-- `backend/conftest.py` — fixtures reutilizáveis
-- `src/test/setup.tsx` — setup frontend
-- `vitest.config.ts` — configuração vitest
-- `playwright.config.ts` — configuração E2E
+---
+
+## Agente F — Observabilidade & Infraestrutura (Cloud & Autonomy)
+
+**Missão:** Garantir a saúde do ambiente de produção e a autonomia dos agentes na resolução de problemas online. Gerenciar deploys e monitorar logs em tempo real usando as CLIs integradas.
+
+**Escopo:**
+- **Vercel CLI**: Gerenciamento do frontend (Project: `reibb`).
+- **Render CLI**: Gerenciamento do backend e banco de dados (Project: `reibb-backend`).
+- **Sentry Dashboards**: Monitoramento de exceções em tempo real.
+- **Environment Sync**: Garantir que `.env.production` e segredos no Render/Vercel estejam pareados.
+
+**Checklist de Autonomia:**
+- [ ] Validar status do frontend: `npx vercel list`
+- [ ] Investigar logs do frontend: `npx vercel logs reibb --project reibb`
+- [ ] Validar status do backend: `./bin/render services`
+- [ ] Investigar logs do backend: `./bin/render logs reibb-backend`
+- [ ] Verificar deploys pendentes: `./bin/render deploys`
+
+**Skills de Agente (Capabilities):**
+- **Deployment Control**: Capacidade de disparar novos builds via CLI.
+- **Log Streaming**: Monitoramento ativo de erros de runtime sem acesso ao dashboard web.
+- **Instance Management**: Reiniciar instâncias problemáticas via `./bin/render restart`.
+
+**Comandos Úteis:**
+```bash
+# Frontend (Vercel)
+npx vercel logs reibb --project reibb
+npx vercel env pull .env.production.local
+
+# Backend (Render)
+./bin/render services
+./bin/render logs reibb-backend
+./bin/render deploys list reibb-backend
+```
+
+**Diretrizes de Manutenção Contínua (Mandatório):**
+1. **Validação E2E/Unitária:** Ao criar/modificar UI ou endpoints, a IA *deve* revalidar o escopo rodando `npm run test:e2e` ou `npm test` localmente.
+2. **Documentação de Tarefas:** Toda sessão de alteração em testes ou endpoints deve manter o `task.md` atualizado e registrar os artefatos corrigidos/validados no `walkthrough.md` ao final.
 
 <!-- END:reibb-agents -->

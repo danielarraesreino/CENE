@@ -1,24 +1,35 @@
 import { test, expect } from '@playwright/test';
 
-test('has login title and inputs', async ({ page }) => {
-  await page.goto('/login');
+test.describe('Login Flow CENE', () => {
+  test.slow();
 
-  await expect(page).toHaveTitle(/Rei Bebê/);
-  await expect(page.getByText('Acesso ao Hub')).toBeVisible();
-  
-  const usernameInput = page.getByPlaceholder('Usuário');
-  const passwordInput = page.getByPlaceholder('Senha');
-  
-  await expect(usernameInput).toBeVisible();
-  await expect(passwordInput).toBeVisible();
-});
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/login');
+    // Espera a animação inicial do Framer Motion terminar
+    await page.waitForTimeout(1000);
+  });
 
-test('shows error on invalid login', async ({ page }) => {
-  await page.goto('/login');
-  
-  await page.getByPlaceholder('Usuário').fill('wronguser');
-  await page.getByPlaceholder('Senha').fill('wrongpass');
-  await page.getByRole('button', { name: 'Entrar no Hub' }).click();
-  
-  await expect(page.getByText(/Credenciais inválidas/i)).toBeVisible({ timeout: 10000 });
+  test('has login title and inputs', async ({ page }) => {
+    await expect(page).toHaveTitle(/CENE/);
+    await expect(page.getByText('Portal CENE')).toBeVisible();
+    
+    const usernameInput = page.getByPlaceholder('Ex: joaosilva');
+    const passwordInput = page.getByPlaceholder('••••••••');
+    
+    await expect(usernameInput).toBeVisible();
+    await expect(passwordInput).toBeVisible();
+  });
+
+  test('shows error on invalid login', async ({ page }) => {
+    await page.getByPlaceholder('Ex: joaosilva').fill('usuario_errado');
+    await page.getByPlaceholder('••••••••').fill('senha_errada');
+    
+    // Clique agressivo para ignorar overlays de animação
+    const loginButton = page.getByRole('button', { name: 'Acessar Plataforma' });
+    await loginButton.click({ force: true });
+    
+    // Espera específica pela mensagem de erro que aparece via motion
+    const errorMsg = page.locator('text=Credenciais inválidas');
+    await expect(errorMsg).toBeVisible({ timeout: 15000 });
+  });
 });

@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import withPWA from '@ducanh2912/next-pwa';
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -76,4 +77,35 @@ const pwa = withPWA({
   },
 });
 
-export default pwa(bundleAnalyzer(nextConfig));
+const sentryConfig = {
+  // Para todas as opções disponíveis, veja:
+  // https://github.com/getsentry/sentry-webpack-plugin#options
+
+  // Suprime mensagens de log do plugin no build
+  silent: true,
+  org: "reibb",
+  project: "frontend",
+  
+  // Para todas as opções disponíveis, veja:
+  // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+
+  // Upload automático de source maps
+  widenClientFileUpload: true,
+
+  // Transpila SDK para navegadores antigos
+  transpileClientSDK: true,
+
+  // Habilita captura de erros de renderização no servidor
+  hideSourceMaps: true,
+
+  // Remove sentry logger statements para reduzir bundle size
+  disableLogger: true,
+
+  // Habilita captura automática de transações
+  automaticVercelMonitors: true,
+};
+
+export default withSentryConfig(
+  pwa(bundleAnalyzer(nextConfig)),
+  sentryConfig
+);

@@ -7,8 +7,11 @@ django.setup()
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
-if not User.objects.filter(username='testuser').exists():
-    User.objects.create_user('testuser', 'testuser@example.com', 'testpass123')
-    print("Test user created.")
+user, created = User.objects.get_or_create(username='testuser', defaults={'email': 'testuser@example.com'})
+user.set_password('testpass123')
+user.save()
+
+if created:
+    print("Test user created with password 'testpass123'.")
 else:
-    print("Test user already exists.")
+    print("Test user password reset to 'testpass123'.")
