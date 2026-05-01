@@ -204,7 +204,7 @@ export default function AlunoPage() {
               >
                 {course.isAvailable ? (
                   <Link
-                    href={`/escola/aluno/cursos/${course.id}`}
+                    href={`/cursos/${course.id}`}
                     className="group block h-full"
                   >
                     <div
