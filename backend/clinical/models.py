@@ -147,7 +147,7 @@ class SafetyPlan(models.Model):
 
 class Journal(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='journal_entries')
-    date = models.DateField(default=timezone.now)
+    date = models.DateField(default=date.today)
     content = EncryptedField()
     entry_type = models.CharField(max_length=50, default='free') # gratitude, reflection, free
     mood_score = models.IntegerField(null=True, blank=True)

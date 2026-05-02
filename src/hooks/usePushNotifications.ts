@@ -1,6 +1,9 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
+import { useSession } from 'next-auth/react';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -10,6 +13,7 @@ export function urlBase64ToUint8Array(base64String: string) {
 }
 
 export function usePushNotifications() {
+  const { data: session } = useSession();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>('default');
 
@@ -45,11 +49,11 @@ export function usePushNotifications() {
         applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
       });
 
-      const res = await fetch('/api/push/subscribe/', {
+      const res = await fetch(`${API_URL}/api/push/subscribe/`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}` 
+          'Authorization': `Bearer ${session?.accessToken}` 
         },
         body: JSON.stringify(sub.toJSON())
       });
@@ -74,9 +78,9 @@ export function usePushNotifications() {
         const endpoint = sub.endpoint;
         await sub.unsubscribe();
         
-        await fetch(`/api/push/subscribe/?endpoint=${encodeURIComponent(endpoint)}`, { 
+        await fetch(`${API_URL}/api/push/subscribe/?endpoint=${encodeURIComponent(endpoint)}`, { 
           method: 'DELETE', 
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } 
+          headers: { 'Authorization': `Bearer ${session?.accessToken}` } 
         });
         
         setIsSubscribed(false);
