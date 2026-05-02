@@ -206,15 +206,15 @@ export default function Home() {
       <section id="sobre" className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-5 gap-12 items-center">
           <div className="md:col-span-2 relative">
-             <div className="aspect-[4/5] bg-slate-200 rounded-3xl overflow-hidden relative shadow-2xl">
-                <img 
-                  src="/matheus.jpeg" 
-                  alt="Matheus Leite Praça" 
+             <div className="aspect-[4/5] bg-slate-200 rounded-3xl overflow-hidden relative shadow-2xl group">
+                <video 
+                  src="/videos/mateus.mp4" 
+                  poster="/matheus.jpeg"
+                  controls
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-                <div className="absolute bottom-6 left-6 text-white">
-                  <p className="font-bold text-xl">Matheus Leite Praça</p>
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pointer-events-none">
+                  <p className="font-bold text-xl text-white">Matheus Leite Praça</p>
                   <p className="text-sm text-emerald-300">Diretor Executivo</p>
                 </div>
              </div>
