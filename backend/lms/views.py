@@ -18,6 +18,8 @@ class UserManagementViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        if not user.is_authenticated:
+            return User.objects.none()
         if user.role == 'admin':
             return User.objects.all()
         # Supervisors only see users they created or are linked to
@@ -27,7 +29,7 @@ class UserManagementViewSet(viewsets.ModelViewSet):
         serializer.save(supervisor=self.request.user)
 
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action == 'create' or self.action == 'register':
             return UserCreateSerializer
         return super().get_serializer_class()
 
@@ -36,6 +38,16 @@ class UserManagementViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['post'], permission_classes=[permissions.AllowAny])
+    def register(self, request):
+        serializer = UserCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            user.role = 'patient'  # Default role for self-registration
+            user.save()
+            return Response(UserSummarySerializer(user).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class PsychologistLinkViewSet(viewsets.ModelViewSet):
     queryset = PsychologistLink.objects.all()
     serializer_class = PsychologistLinkSerializer
@@ -43,6 +55,8 @@ class PsychologistLinkViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        if not user.is_authenticated:
+            return PsychologistLink.objects.none()
         if user.role == 'admin':
             return PsychologistLink.objects.all()
         return PsychologistLink.objects.filter(psychologist__supervisor=user) | PsychologistLink.objects.filter(psychologist=user)
@@ -88,4 +102,3 @@ def bootstrap_test_user(request):
         user.role = 'patient'
         user.save()
     return Response({'status': 'bootstrapped', 'username': username})
-
