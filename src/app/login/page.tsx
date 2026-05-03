@@ -43,13 +43,8 @@ function LoginForm() {
       setLoading(false);
       setStep(1); // Volta caso haja erro
     } else {
-      // Obter sessão para verificar a role e fazer roteamento federado
-      const session = await getSession();
-      if (session?.user?.role === "patient") {
-        router.push("/portal/paciente/clinical"); // Hub do Paciente
-      } else {
-        router.push("/hub"); // LMS Estudante/Instrutor
-      }
+      // Roteamento centralizado pelo Hub (role-aware)
+      router.push("/hub");
     }
   };
 
@@ -187,4 +182,3 @@ export default function LoginPage() {
     </Suspense>
   );
 }
-

@@ -37,7 +37,7 @@ const clinicalTools = [
 
 const mainNavItems = [
   { name: "Início", path: "/", icon: Home },
-  { name: "Hub", path: "/portal/paciente", icon: LayoutDashboard },
+  { name: "Hub", path: "/hub", icon: LayoutDashboard },
   { name: "Escola", path: "/escola/aluno", icon: GraduationCap },
   { name: "Progresso", path: "/progresso", icon: PieChart },
 ];

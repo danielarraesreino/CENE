@@ -6,9 +6,6 @@ export default withAuth(
     const { pathname } = req.nextUrl;
 
     // Redirecionamentos de compatibilidade para novas rotas canônicas
-    if (pathname === "/hub") {
-      return NextResponse.redirect(new URL("/portal/paciente", req.url));
-    }
     if (pathname === "/sos") {
       return NextResponse.redirect(new URL("/portal/paciente/sos", req.url));
     }
@@ -23,7 +20,7 @@ export default withAuth(
   },
   {
     pages: {
-      signIn: "/login",
+      signIn: "/hub",
     },
   }
 );
