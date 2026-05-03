@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSession } from "next-auth/react";
 import { useRagChat } from "@/hooks/useRagChat";
 import { useProgressStore } from "@/store/useProgressStore";
 import { Send, X, MessageSquareQuote, Sparkles, Brain } from "lucide-react";
@@ -14,6 +15,7 @@ const quickQuestions = [
 ];
 
 export default function ClinicoCopilot() {
+  const { data: session } = useSession();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const { messages, sendMessage, loading } = useRagChat();
@@ -121,7 +123,7 @@ export default function ClinicoCopilot() {
                   ))}
                 </div>
                 
-                {caminhosStats && (
+                {caminhosStats && (session as any)?.user?.role !== "patient" && (
                   <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex flex-col gap-2">
                     <div className="flex items-center gap-2 text-emerald-700 font-bold text-sm">
                       <Sparkles size={16} /> 

@@ -2,9 +2,12 @@
 
 import React, { ErrorInfo, ReactNode } from "react";
 import { AlertTriangle, RefreshCw, Home } from "lucide-react";
+import * as Sentry from "@sentry/nextjs";
 
 interface Props {
   children: ReactNode;
+  /** Renderiza fallback customizado ao invés da tela padrão de erro */
+  fallback?: ReactNode;
 }
 
 interface State {
@@ -23,8 +26,13 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
-    // TODO: Enviar para serviço de monitoramento (ex: Sentry)
+    // Envia o erro ao Sentry com contexto completo do component stack
+    Sentry.captureException(error, {
+      extra: {
+        componentStack: errorInfo.componentStack,
+      },
+    });
+    console.error("[ErrorBoundary] Erro capturado:", error, errorInfo);
   }
 
   handleReset = () => {
@@ -34,6 +42,10 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+
       return (
         <div className="min-h-screen flex items-center justify-center p-6 bg-slate-950">
           <div className="glass-panel p-12 rounded-[3rem] border border-red-500/20 max-w-lg w-full text-center relative overflow-hidden">

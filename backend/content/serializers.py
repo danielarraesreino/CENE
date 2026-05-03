@@ -2,7 +2,7 @@ import bleach
 from django.conf import settings
 from rest_framework import serializers
 from django.utils import timezone
-from .models import Course, Module, Lesson
+from .models import Course, Module, Lesson, Trail
 from progress.models import LessonProgress
 
 class LessonSerializer(serializers.ModelSerializer):
@@ -16,7 +16,8 @@ class LessonSerializer(serializers.ModelSerializer):
         model = Lesson
         fields = [
             'id', 'title', 'content_type', 'content_html', 'video_url', 
-            'pdf_file', 'duration_minutes', 'order', 'unlock_strategy', 
+            'pdf_file', 'audio_file', 'attachment', 'quiz_data',
+            'duration_minutes', 'order', 'unlock_strategy', 
             'release_date', 'is_unlocked', 'is_completed', 'prerequisites_ids'
         ]
 
@@ -27,16 +28,17 @@ class LessonSerializer(serializers.ModelSerializer):
         if request.user.is_staff:
             return True
             
-        # 1. Pré-requisitos
-        completed_ids = LessonProgress.objects.filter(
-            user=request.user,
-            course_slug=obj.module.course.slug
-        ).values_list('lesson_id', flat=True)
+        # If it's a Trail lesson, the logic might differ, but for now we follow Course logic
+        if obj.module.course:
+            completed_ids = LessonProgress.objects.filter(
+                user=request.user,
+                course_slug=obj.module.course.slug
+            ).values_list('lesson_id', flat=True)
+            
+            for prereq in obj.prerequisites.all():
+                if prereq.id not in completed_ids:
+                    return False
         
-        for prereq in obj.prerequisites.all():
-            if prereq.id not in completed_ids:
-                return False
-                
         # 2. Data
         if obj.unlock_strategy == 'date' and obj.release_date:
             if timezone.now() < obj.release_date:
@@ -73,3 +75,13 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     modules = ModuleSerializer(many=True, read_only=True)
     class Meta:
         model = Course; fields = ['id', 'title', 'slug', 'description', 'cover_image', 'target_role', 'modules']
+
+from lms.serializers import UserSummarySerializer
+
+class TrailSerializer(serializers.ModelSerializer):
+    modules = ModuleSerializer(many=True, read_only=True)
+    author = UserSummarySerializer(read_only=True)
+    
+    class Meta:
+        model = Trail
+        fields = ['id', 'title', 'category', 'description', 'is_premium', 'order', 'is_active', 'modules', 'author']

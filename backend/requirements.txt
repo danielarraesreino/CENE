@@ -33,3 +33,4 @@ bleach>=6.1.0
 pywebpush>=1.93.0
 Pillow>=10.0.0
 sentry-sdk[django]
+reportlab>=4.0.0

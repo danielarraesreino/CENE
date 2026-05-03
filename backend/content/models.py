@@ -37,21 +37,54 @@ class Course(models.Model):
 
     def __str__(self): return self.title
 
+class Trail(models.Model):
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True, blank=True)
+    description = models.TextField(blank=True)
+    category = models.CharField(max_length=100)
+    is_premium = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='created_trails')
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return self.title
+
 class Module(models.Model):
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='modules')
+    trail = models.ForeignKey(Trail, on_delete=models.CASCADE, related_name='modules', null=True, blank=True)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='modules', null=True, blank=True)
     title = models.CharField(max_length=200)
     order = models.PositiveIntegerField(default=0)
     class Meta: ordering = ['order']
-    def __str__(self): return f"{self.course.title} - {self.title}"
+    def __str__(self): return f"{self.title}"
 
 class Lesson(models.Model):
-    TYPE_CHOICES = [('video', 'Vídeo'), ('text', 'Texto'), ('pdf', 'PDF'), ('quiz', 'Quiz')]
+    TYPE_CHOICES = [
+        ('video', 'Vídeo'), 
+        ('text', 'Texto'), 
+        ('pdf', 'PDF'), 
+        ('quiz', 'Quiz'),
+        ('audio', 'Áudio'),
+        ('powerpoint', 'PowerPoint'),
+        ('form', 'Formulário'),
+    ]
     module = models.ForeignKey(Module, on_delete=models.CASCADE, related_name='lessons')
     title = models.CharField(max_length=200)
     content_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='text')
     content_html = models.TextField(blank=True)
     video_url = models.URLField(blank=True)
+    audio_file = models.FileField(upload_to='courses/audio/', blank=True, null=True)
     pdf_file = models.FileField(upload_to='courses/materials/', blank=True, null=True)
+    attachment = models.FileField(upload_to='courses/attachments/', blank=True, null=True, help_text="PowerPoint or other resources")
+    
+    # Quiz data (as JSON for flexibility)
+    quiz_data = models.JSONField(null=True, blank=True)
+    
     duration_minutes = models.PositiveIntegerField(default=0)
     order = models.PositiveIntegerField(default=0)
     
@@ -63,6 +96,10 @@ class Lesson(models.Model):
         default='immediate'
     )
     release_date = models.DateTimeField(blank=True, null=True, help_text='Para estratégia "date"')
+
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='created_lessons')
+    is_published = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta: ordering = ['order']
     def __str__(self): return self.title

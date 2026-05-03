@@ -15,11 +15,31 @@ logger = logging.getLogger(__name__)
 # Helper de Criptografia AES-256
 class EncryptionHelper:
     @staticmethod
-    def get_key():
-        # Usa a SECRET_KEY do Django como base para a chave de criptografia
-        # Em produção, deve ser uma chave de 32 bytes separada e segura
-        key = settings.SECRET_KEY[:32].encode('utf-8')
-        return key
+    def get_key() -> bytes:
+        """
+        Retorna a chave AES de 32 bytes.
+        Prioridade:
+          1. CLINICAL_ENCRYPTION_KEY (env var dedicada) — obrigatório em produção
+          2. SECRET_KEY[:32] — fallback apenas em DEBUG para facilitar dev local
+        """
+        dedicated_key = getattr(settings, 'CLINICAL_ENCRYPTION_KEY', '')
+        if dedicated_key:
+            import base64 as _b64
+            try:
+                # Aceita chave em base64 (32 bytes encoded) ou texto plano de 32 chars
+                raw = _b64.b64decode(dedicated_key)
+                return raw[:32].ljust(32, b'\x00')  # garante 32 bytes
+            except Exception:
+                return dedicated_key[:32].encode('utf-8')
+
+        if settings.DEBUG:
+            # Fallback seguro apenas em desenvolvimento
+            return settings.SECRET_KEY[:32].encode('utf-8')
+
+        raise ValueError(
+            'CLINICAL_ENCRYPTION_KEY não configurada em produção. '
+            'Gere com: python -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(32)).decode())"'
+        )
 
     @staticmethod
     def encrypt(text):

@@ -6,22 +6,22 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession, signOut } from "next-auth/react";
 import { 
-  Home, 
-  LayoutDashboard, 
-  MessageSquare, 
-  User as UserIcon, 
-  LogOut,
-  Menu,
-  X,
-  Activity,
-  PieChart,
-  Brain,
-  Target,
-  ShieldAlert,
-  Calendar,
-  BookHeart,
   ChevronDown,
-  GraduationCap
+  GraduationCap,
+  ShieldCheck,
+  Brain,
+  Activity,
+  Target,
+  Calendar,
+  ShieldAlert,
+  BookHeart,
+  Home,
+  LayoutDashboard,
+  PieChart,
+  UserIcon,
+  LogOut,
+  X,
+  Menu
 } from "lucide-react";
 
 import ThemeToggle from "@/components/ui/ThemeToggle";
@@ -40,6 +40,12 @@ const mainNavItems = [
   { name: "Hub", path: "/portal/paciente", icon: LayoutDashboard },
   { name: "Escola", path: "/escola/aluno", icon: GraduationCap },
   { name: "Progresso", path: "/progresso", icon: PieChart },
+];
+
+const instructorNavItems = [
+  { name: "Estúdio CMS", path: "/instrutor/cms", icon: BookHeart },
+  { name: "Minha Equipe", path: "/instrutor/users", icon: UserIcon },
+  { name: "Pacientes", path: "/instrutor/pacientes", icon: GraduationCap },
 ];
 
 export default function Navbar() {
@@ -148,6 +154,15 @@ export default function Navbar() {
           {mainNavItems.slice(2).map((item) => (
             <NavItem key={item.path} item={item} isActive={pathname === item.path} />
           ))}
+
+          {/* Instructor Items */}
+          {(session?.user as any)?.role === 'admin' || (session?.user as any)?.role === 'supervisor' ? (
+            <div className="flex items-center gap-1 border-l border-slate-200 dark:border-slate-700 ml-2 pl-2">
+              {instructorNavItems.map((item) => (
+                <NavItem key={item.path} item={item} isActive={pathname === item.path} />
+              ))}
+            </div>
+          ) : null}
         </div>
 
         {/* User Actions */}
@@ -165,6 +180,29 @@ export default function Navbar() {
               S.O.S
             </motion.button>
           </Link>
+
+          {/* Switch Mode Button for Admin/Supervisor */}
+          {((session?.user as any)?.role === 'admin' || (session?.user as any)?.role === 'supervisor') && (
+            <Link href={pathname.startsWith('/instrutor') ? '/portal/paciente' : '/instrutor'} className="hidden lg:block">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center gap-2 bg-emerald-600 text-white px-5 py-2 rounded-full shadow-lg shadow-emerald-200 transition-all font-black text-xs uppercase tracking-widest"
+              >
+                {pathname.startsWith('/instrutor') ? (
+                  <>
+                    <LayoutDashboard size={16} />
+                    Visão de Aluno
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck size={16} />
+                    Modo Gestor
+                  </>
+                )}
+              </motion.button>
+            </Link>
+          )}
 
           {session ? (
             <div className="flex items-center gap-3">
@@ -228,6 +266,25 @@ export default function Navbar() {
                   </Link>
                 ))}
               </div>
+
+              {/* Instructor Nav (Mobile) */}
+              {((session?.user as any)?.role === 'admin' || (session?.user as any)?.role === 'supervisor') && (
+                <div className="grid grid-cols-1 gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 mb-2 ml-4">Gestão & Estúdio</span>
+                  {instructorNavItems.map((item) => (
+                    <Link 
+                      key={item.path} 
+                      href={item.path}
+                      className={`flex items-center gap-4 p-4 rounded-3xl ${
+                        pathname === item.path ? "bg-emerald-50 dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 border border-emerald-200 dark:border-emerald-800" : "text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800"
+                      }`}
+                    >
+                      <item.icon size={20} />
+                      <span className="font-bold text-lg">{item.name}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
 
               {/* Clinical Tools */}
               <div className="grid grid-cols-1 gap-2">

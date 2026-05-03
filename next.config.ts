@@ -24,7 +24,7 @@ const bundleAnalyzer = withBundleAnalyzer({
 
 const pwa = withPWA({
   dest: 'public',
-  disable: false, // Habilitado em dev para testes
+  disable: process.env.NODE_ENV !== 'production', // Desabilitado em dev para evitar conflitos de cache
   register: true,
   
   // Estratégias de cache otimizadas para Reibb

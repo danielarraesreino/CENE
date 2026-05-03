@@ -35,7 +35,9 @@ if not DEBUG:
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-nft@08jkdln7d)tqui9=hx5f73o7nsozxe(%%c!gj)5!9lylv@")
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-fallback" if DEBUG else "")
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY is mandatory in production environment.")
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,*").split(",")
 
@@ -62,14 +64,21 @@ INSTALLED_APPS = [
     "push",
 ]
 
-# VAPID Keys for Web Push
-VAPID_PUBLIC_KEY = "BJWO2ZUfUH5BASLX8IIpPbKBpQNif2zFBo2dcYXZrI1AJmWkzKK1C6WtLO1ctTw0p8PdorxrXmd4H-VeqJCZaFE"
-VAPID_PRIVATE_KEY = """-----BEGIN PRIVATE KEY-----
-MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg89yQDe2+/yvtJ1Wp
-ETjX0YTMRQ/Wp9QiEQeFjEjbYaKhRANCAASVjtmVH1B+QQEi1/CCKT2ygaUDYn9s
-xQaNnXGF2ayNQCZlpMyitQulrSztXLU8NKfD3aK8a15neB/lXqiQmWhR
------END PRIVATE KEY-----"""
-VAPID_ADMIN_EMAIL = "admin@reibb.dev"
+# VAPID Keys for Web Push — carregadas exclusivamente de variáveis de ambiente
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
+VAPID_ADMIN_EMAIL = os.environ.get('VAPID_ADMIN_EMAIL', 'admin@reibb.dev')
+
+if not DEBUG and (not VAPID_PUBLIC_KEY or not VAPID_PRIVATE_KEY):
+    import logging as _logging
+    _logging.getLogger(__name__).warning(
+        'VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY não configuradas — push notifications desabilitadas'
+    )
+
+# Chave dedicada para criptografia AES de dados clínicos.
+# Em produção: gere com `python -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(32)).decode())"`
+# Rotacionar esta chave requer re-criptografar os dados existentes.
+CLINICAL_ENCRYPTION_KEY = os.environ.get('CLINICAL_ENCRYPTION_KEY', '')
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
@@ -199,6 +208,15 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',
+        'user': '5000/day',
+        'llm': '100/day',
+    },
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 50,
 }

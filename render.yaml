@@ -12,7 +12,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: ALLOWED_HOSTS
-        value: "*"
+        value: "reibb-backend.onrender.com,reibb.vercel.app,cenecursos.com.br,www.cenecursos.com.br,localhost,127.0.0.1"
       - key: CORS_ALLOWED_ORIGINS
         value: "https://cene.vercel.app,http://localhost:3000,https://reibb.vercel.app,https://cenecursos.com.br,https://www.cenecursos.com.br" # Update this to your vercel app domain later
       - key: CSRF_TRUSTED_ORIGINS
@@ -21,16 +21,22 @@ services:
         fromDatabase:
           name: reibb-postgres
           property: connectionString
-      # Add VAPID and Gemini keys later
+      # Chaves de terceiros — configurar manualmente no dashboard do Render
       - key: GEMINI_API_KEY
         sync: false
       - key: VAPID_PRIVATE_KEY
         sync: false
       - key: VAPID_PUBLIC_KEY
         sync: false
+      - key: VAPID_ADMIN_EMAIL
+        sync: false
+      # Chave AES dedicada para criptografia de dados clínicos.
+      # Gere com: python -c "import secrets, base64; print(base64.b64encode(secrets.token_processors(32)).decode())"
+      - key: CLINICAL_ENCRYPTION_KEY
+        sync: false
 
 databases:
   - name: reibb-postgres
     databaseName: reibb_db
     user: reibb_user
-    plan: free
+    plan: starter

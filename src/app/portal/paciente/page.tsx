@@ -67,7 +67,7 @@ export default function HubDashboard() {
               </div>
               <div>
                 <h4 className="text-xl font-black text-slate-900">Como você está se sentindo agora?</h4>
-                <p className="text-slate-600 text-sm">O check-in diário ajuda a mapear sua estabilidade emocional.</p>
+                <p className="text-slate-700 text-sm font-medium">O check-in diário ajuda a mapear sua estabilidade emocional.</p>
               </div>
             </div>
             <div className="flex items-center gap-3 bg-emerald-600 text-white px-6 py-3 rounded-xl font-black text-sm uppercase tracking-widest group-hover:gap-5 transition-all shadow-sm">
@@ -94,7 +94,7 @@ export default function HubDashboard() {
           <span className="text-gradient">Desenvolvimento</span>
         </h1>
         
-        <p className="text-xl md:text-2xl text-slate-600 max-w-3xl mx-auto leading-relaxed mb-12">
+        <p className="text-xl md:text-2xl text-slate-700 max-w-3xl mx-auto leading-relaxed mb-12 font-medium">
           Domine a prática profissional através do conhecimento profundo. 
           Cada módulo é um passo em direção à sua especialização.
         </p>
@@ -138,7 +138,7 @@ export default function HubDashboard() {
               <div className="text-center md:text-left py-4">
                 <span className="text-xs font-black text-emerald-100 uppercase tracking-[0.4em] mb-1 block">Retomar de onde parou</span>
                 <h3 className="text-2xl md:text-3xl font-black text-white leading-none mb-1">{nextTrail.title}</h3>
-                <div className="flex items-center gap-2 text-emerald-100/80 font-bold text-sm">
+                <div className="flex items-center gap-2 text-white font-black text-xs uppercase tracking-widest opacity-90">
                   <span>Módulo {nextTrail.id}</span>
                   <div className="w-1 h-1 rounded-full bg-white/50" />
                   <span>{nextTrail.category}</span>

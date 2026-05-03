@@ -10,9 +10,11 @@ import {
   BookHeart,
   Sparkles,
   ChevronRight,
-  ArrowRight
+  ArrowRight,
+  Download
 } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 import { ClinicalLayout } from "@/components/layout/ClinicalLayout";
 import { ClinicalCard } from "@/components/clinical/ui/ClinicalCard";
@@ -42,7 +44,7 @@ const tools = [
   {
     id: "goals",
     title: "Metas e Valores",
-    description: "Alinhe suas ações diárias com seus valores fundamentais de vida.",
+    description: "Alinhe suas ações diárias com seus values fundamentais de vida.",
     icon: Target,
     path: "/portal/paciente/clinical/goals",
     color: "text-orange-600",
@@ -104,29 +106,91 @@ const cardVariants = {
 } as const;
 
 export default function ClinicalHubPage() {
+  const { data: session } = useSession();
+
+  const handleDownload = async (type: 'rpd' | 'mood') => {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const token = (session as any)?.accessToken;
+    
+    if (!token) {
+      alert("Sessão inválida para download.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${baseUrl}/api/clinical/${type}/export_pdf/`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha na autenticação ou ao gerar PDF');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `relatorio_${type}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Erro ao baixar PDF:", error);
+      alert("Ocorreu um erro ao baixar o arquivo.");
+    }
+  };
+
   return (
     <ClinicalLayout containerClassName="max-w-7xl pt-12 md:pt-20">
       <header className="mb-20">
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="flex items-center gap-3 mb-8"
-        >
-          <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 border border-emerald-100 shadow-sm">
-            <Sparkles size={20} />
-          </div>
-          <span className="text-emerald-700 font-black tracking-[0.2em] uppercase text-xs">Arsenal Especializado</span>
-        </motion.div>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-12">
+          <div>
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-3 mb-6"
+            >
+              <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 border border-emerald-100 shadow-sm">
+                <Sparkles size={20} />
+              </div>
+              <span className="text-emerald-700 font-black tracking-[0.2em] uppercase text-xs">Arsenal Especializado</span>
+            </motion.div>
 
-        <motion.h1 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="text-5xl md:text-7xl font-black text-slate-900 mb-8 leading-[0.95] tracking-tighter"
-        >
-          Ferramentas de <br />
-          <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Especialização</span>
-        </motion.h1>
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-5xl md:text-7xl font-black text-slate-900 mb-4 leading-[0.95] tracking-tighter"
+            >
+              Ferramentas de <br />
+              <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Especialização</span>
+            </motion.h1>
+          </div>
+
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-wrap gap-4"
+          >
+            <button 
+              onClick={() => handleDownload('rpd')}
+              className="flex items-center gap-3 bg-white hover:bg-slate-50 text-slate-700 px-6 py-4 rounded-2xl border border-slate-200 shadow-sm font-black text-xs uppercase tracking-widest transition-all"
+            >
+              <Download size={18} className="text-emerald-600" />
+              Baixar Relatório RPD
+            </button>
+            <button 
+              onClick={() => handleDownload('mood')}
+              className="flex items-center gap-3 bg-white hover:bg-slate-50 text-slate-700 px-6 py-4 rounded-2xl border border-slate-200 shadow-sm font-black text-xs uppercase tracking-widest transition-all"
+            >
+              <Download size={18} className="text-blue-600" />
+              Relatório de Humor
+            </button>
+          </motion.div>
+        </div>
         
         <motion.p 
           initial={{ opacity: 0, y: 20 }}

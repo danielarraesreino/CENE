@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import dynamic from "next/dynamic";
 import {
   TrailConfig,
   isNarrative,
@@ -19,9 +20,22 @@ import { QuizRenderer } from "./renderers/QuizRenderer";
 import { ReflectionRenderer } from "./renderers/ReflectionRenderer";
 import { BreathingRenderer } from "./renderers/BreathingRenderer";
 
-// Componentes interativos ricos (legacy migrados)
-import { Trail3Interactive } from "@/components/Trails/Trail3Interactive";
-import { Trail7Interactive } from "@/components/Trails/Trail7Interactive";
+// Componentes interativos ricos (carregados dinamicamente para otimização de bundle)
+const Trail3Interactive = dynamic(
+  () => import("./interactive/Trail3Interactive").then(mod => mod.Trail3Interactive),
+  { 
+    loading: () => <div className="h-64 w-full animate-pulse bg-slate-100 rounded-[2rem]" />, 
+    ssr: false 
+  }
+);
+
+const Trail7Interactive = dynamic(
+  () => import("./interactive/Trail7Interactive").then(mod => mod.Trail7Interactive),
+  { 
+    loading: () => <div className="h-64 w-full animate-pulse bg-slate-100 rounded-[2rem]" />, 
+    ssr: false 
+  }
+);
 
 interface TrailRendererProps {
   trail: TrailConfig;

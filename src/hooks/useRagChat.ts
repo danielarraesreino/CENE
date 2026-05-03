@@ -49,8 +49,8 @@ export function useRagChat() {
         throw new ApiError(
           isAbort ? "TIMEOUT_ERROR" : "NETWORK_ERROR",
           isAbort
-            ? "O assistente demorou muito para responder. Tente novamente."
-            : "Conexão instável. Verifique sua rede.",
+            ? "O assistente demorou muito para responder. Em caso de urgência ou crise, utilize o Modo SOS ou seu Plano de Segurança."
+            : "Conexão instável. Verifique sua rede ou tente novamente em instantes.",
           0,
           true
         );
@@ -62,9 +62,9 @@ export function useRagChat() {
         if (res.status === 401 || res.status === 403) {
            throw new ApiError("AUTH_ERROR", "Sua sessão expirou. Faça login novamente.", res.status);
         } else if (res.status >= 500) {
-           throw new ApiError("AI_SERVICE_UNAVAILABLE", "Assistente temporariamente indisponível. Tente em instantes.", res.status, true);
+           throw new ApiError("AI_SERVICE_UNAVAILABLE", "O serviço de IA está sobrecarregado. Se precisar de apoio imediato, ligue 188 (CVV).", res.status, true);
         } else {
-           throw new ApiError("NETWORK_ERROR", "Conexão instável. Verifique sua rede.", res.status, true);
+           throw new ApiError("NETWORK_ERROR", "Erro de conexão. Verifique sua internet.", res.status, true);
         }
       }
 
@@ -91,18 +91,21 @@ export function useRagChat() {
     onError: (error: unknown, variables) => {
       const apiError = error instanceof ApiError 
         ? error 
-        : new ApiError('UNKNOWN_ERROR', 'Ocorreu um erro inesperado. Nossa equipe foi notificada.', 500, true);
+        : new ApiError('UNKNOWN_ERROR', 'Ocorreu um erro inesperado no processamento.', 500, true);
       
-      // Padronizado via ERROR_HANDLING_GUIDE.md
       console.warn('[REIBB_API_ERROR]', { 
         code: apiError.code, 
         message: apiError.userMessage,
         details: apiError.details 
       });
       
+      const isTimeout = apiError.code === "TIMEOUT_ERROR";
+      
       addMessage({
         role: "assistant",
-        content: "Desculpe, houve um erro ao processar sua mensagem. Em caso de crise, ligue para o CVV: **188** ou SAMU: **192**.",
+        content: isTimeout 
+          ? "Sinto muito, mas não consegui processar sua resposta a tempo. **Se você estiver em crise agora, por favor:**\n\n1. Ligue para o **CVV (188)** ou **SAMU (192)**.\n2. Acesse seu **Plano de Segurança**.\n3. Procure um familiar ou pessoa de confiança."
+          : "Houve uma falha técnica na comunicação. Em caso de necessidade urgente, utilize os contatos de emergência (188 / 192).",
       });
       
       useErrorStore.getState().setError(apiError.userMessage);
@@ -111,7 +114,7 @@ export function useRagChat() {
         action: apiError.isRetryable 
           ? { label: 'Tentar novamente', onClick: () => chatMutation.mutate(variables) } 
           : undefined,
-        duration: apiError.isRetryable ? 6000 : 4000,
+        duration: 8000,
       });
     }
   });

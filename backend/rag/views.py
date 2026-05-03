@@ -5,6 +5,7 @@ from django.http import StreamingHttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
 from rag.models import ChatMessage
 
 # Configure Gemini
@@ -23,6 +24,8 @@ def _timeout_handler(signum, frame):
 
 class ChatView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'llm'
 
     def post(self, request):
         message_text = request.data.get('message')

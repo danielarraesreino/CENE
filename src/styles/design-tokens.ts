@@ -42,8 +42,8 @@ export const borderRadius = {
 };
 
 export const typography = {
-  h1: 'text-3xl md:text-4xl font-black tracking-tight',
-  h2: 'text-2xl md:text-3xl font-black',
-  body: 'text-lg text-slate-600',
-  label: 'text-sm font-bold uppercase tracking-widest text-slate-600',
+  h1: 'text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1]',
+  h2: 'text-2xl md:text-3xl lg:text-4xl font-black tracking-tight',
+  body: 'text-lg text-slate-800 leading-relaxed font-medium',
+  label: 'text-xs font-black uppercase tracking-[0.2em] text-slate-500',
 };

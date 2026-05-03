@@ -1,28 +1,34 @@
 from rest_framework import serializers
-from .models import User, TrailProgress
+from .models import User, PsychologistLink, TrailProgress
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'email', 'is_premium']
-
-class TrailProgressSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TrailProgress
-        fields = ['trail_id', 'is_unlocked', 'status', 'ouvir', 'estudar', 'avaliar']
-        read_only_fields = ['trail_id']
-
-class RegisterSerializer(serializers.ModelSerializer):
+class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password']
+        fields = ['username', 'email', 'password', 'role', 'first_name', 'last_name']
 
     def create(self, validated_data):
-        user = User.objects.create_user(
-            username=validated_data['username'],
-            email=validated_data.get('email', ''),
-            password=validated_data['password']
-        )
+        password = validated_data.pop('password')
+        user = User.objects.create(**validated_data)
+        user.set_password(password)
+        user.save()
         return user
+
+class UserSummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'role', 'first_name', 'last_name']
+
+class PsychologistLinkSerializer(serializers.ModelSerializer):
+    patient_detail = UserSummarySerializer(source='patient', read_only=True)
+    psychologist_detail = UserSummarySerializer(source='psychologist', read_only=True)
+
+    class Meta:
+        model = PsychologistLink
+        fields = ['id', 'patient', 'psychologist', 'is_active', 'patient_detail', 'psychologist_detail']
+
+class TrailProgressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TrailProgress
+        fields = '__all__'

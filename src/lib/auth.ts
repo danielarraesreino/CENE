@@ -25,10 +25,17 @@ export const authOptions: NextAuthOptions = {
           const data = await res.json();
 
           if (res.ok && data.access) {
-            // Decodificar o JWT para extrair informações (opcional) ou apenas retornar o token
+            // Fetch user profile to get the role
+            const profileRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/me/`, {
+              headers: { "Authorization": `Bearer ${data.access}` },
+            });
+            const profile = await profileRes.json();
+
             return {
               id: credentials.username,
-              name: credentials.username,
+              name: profile.first_name || credentials.username,
+              email: profile.email,
+              role: profile.role,
               accessToken: data.access,
               refreshToken: data.refresh,
             };
@@ -47,13 +54,16 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.accessToken = (user as { accessToken?: string }).accessToken;
-        token.refreshToken = (user as { refreshToken?: string }).refreshToken;
+        const u = user as any;
+        token.accessToken = u.accessToken;
+        token.refreshToken = u.refreshToken;
+        token.role = u.role;
       }
       return token;
     },
     async session({ session, token }) {
-      session.accessToken = token.accessToken;
+      (session as any).accessToken = token.accessToken;
+      (session as any).user.role = token.role;
       return session;
     },
   },

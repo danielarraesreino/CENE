@@ -7,6 +7,44 @@ from django.utils import timezone
 from datetime import timedelta
 from content.models import Course, Lesson
 from progress.models import LessonProgress
+from clinical.models import MoodLog
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class InstructorGlobalStatsView(APIView):
+    """
+    Retorna métricas globais para o dashboard do instrutor (Admin/Supervisor).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role not in ['admin', 'supervisor']:
+            raise PermissionDenied("Acesso restrito a instrutores e supervisores.")
+
+        now = timezone.now()
+        hoje_inicio = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        # Total de pacientes na plataforma
+        total_patients = User.objects.filter(role='patient').count()
+
+        # Trilhas/cursos ativos publicados
+        active_trails = Course.objects.filter(status='published').count()
+
+        # Lições totais criadas na plataforma (qualquer curso/modulo)
+        created_lessons = Lesson.objects.count()
+
+        # Logs diários (vamos usar MoodLog como exemplo representativo da atividade diária clínica)
+        today_logs = MoodLog.objects.filter(timestamp__gte=hoje_inicio).count()
+
+        return Response({
+            "total_patients": total_patients,
+            "active_trails": active_trails,
+            "created_lessons": created_lessons,
+            "today_logs": today_logs,
+            "generated_at": now.isoformat()
+        })
+
 
 class CourseEngagementView(APIView):
     permission_classes = [IsAuthenticated]

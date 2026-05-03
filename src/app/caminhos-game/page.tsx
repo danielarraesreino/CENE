@@ -1,7 +1,17 @@
 'use client';
 
-import { CaminhosGame } from '@/components/features/interactive/CaminhosGame/CaminhosGame';
+import dynamic from 'next/dynamic';
 import { useProgressStore } from '@/store/useProgressStore';
+
+const CaminhosGame = dynamic(
+  () => import('@/components/features/interactive/CaminhosGame/CaminhosGame').then(mod => mod.CaminhosGame),
+  { ssr: false, loading: () => (
+    <div className="flex flex-col items-center justify-center p-20 text-center space-y-4">
+      <div className="w-12 h-12 border-4 border-brand-cyan border-t-transparent rounded-full animate-spin" />
+      <p className="text-brand-cyan font-bold animate-pulse">Inicializando Simulador de Resiliência...</p>
+    </div>
+  )}
+);
 import { useRouter } from 'next/navigation';
 
 interface InventoryItem {
